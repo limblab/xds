@@ -10,7 +10,6 @@ import scipy.io as sio
 from scipy import stats
 
 # adding os.path to do filetesting - CP, 2019-06-19
-import os.path
 from os import path
 
 if sys.version[0] == '2':
@@ -148,8 +147,8 @@ class lab_data:
         for each in self.trial_info_table_header:
             print(each)
             
-    def get_one_colum_in_trial_info_table(self, colum_name):
-        n = np.where(np.asarray(self.trial_info_table_header) == colum_name)[0][0]
+    def get_one_column_in_trial_info_table(self, column_name):
+        n = np.where(np.asarray(self.trial_info_table_header) == column_name)[0][0]
         a = []
         for each in self.trial_info_table:
             a.append(each[n][0][0])
