@@ -1,4 +1,37 @@
 function xds = raw_to_xds(file_dir, file_name, map_dir, map_name, params)
+% raw_to_xds(file_dir, file_name, map_dir, map_name, params)
+%
+% takes in raw .nev and associated files, and spits out an XDS structure.
+% This structure will be built according to the information given by the
+% params structure that's input.
+%
+% Despite the name, this goes through the CDS structure as an intermediary.
+% Take that into account - any issues in that codebase will be propagated
+% through to this output.
+%
+% -- Inpusts --
+% file_dir              Where the file is stored
+% file_name             file name to be converted
+% map_dir               directory where the array map is stored
+% map_name              name of the map file
+% params:        
+%   monkey_name         monkey's name 
+%   array_name          nickname for the array (ie M1). use the name from
+%                           the implant database
+%   task_name           valid task code according to the CDS code
+%   ran_by              identification of who collected the data
+%   lab                 lab #
+%   bin_width           width to bin the spiking and EMG
+%   sorted              Is the file sorted? (0/1 or true/false)
+%   requires_raw_emg    True for all EMG recordings
+%
+%
+% -- Outputs --
+% xds                   The XDS file structure
+%
+
+
+
 data_file = strcat(file_dir, file_name);
 map_file = strcat(map_dir, map_name);
 monkey_name = params.monkey_name;
@@ -135,12 +168,12 @@ if ex.meta.hasKinematics == true
    vyMask = ~cellfun(@(x)isempty(strfind(x,'vy')),ex.bin.data.Properties.VariableNames);
    axMask = ~cellfun(@(x)isempty(strfind(x,'ax')),ex.bin.data.Properties.VariableNames);
    ayMask = ~cellfun(@(x)isempty(strfind(x,'ay')),ex.bin.data.Properties.VariableNames);
-   xds.kin_p(:, 1) = ex.bin.data{:, xMask};
-   xds.kin_p(:, 2) = ex.bin.data{:, yMask};
-   xds.kin_v(:, 1) = ex.bin.data{:, vxMask};
-   xds.kin_v(:, 2) = ex.bin.data{:, vyMask};
-   xds.kin_a(:, 1) = ex.bin.data{:, axMask};
-   xds.kin_a(:, 2) = ex.bin.data{:, ayMask};
+   xds.curs_p(:, 1) = ex.bin.data{:, xMask};
+   xds.curs_p(:, 2) = ex.bin.data{:, yMask};
+   xds.curs_v(:, 1) = ex.bin.data{:, vxMask};
+   xds.curs_v(:, 2) = ex.bin.data{:, vyMask};
+   xds.curs_a(:, 1) = ex.bin.data{:, axMask};
+   xds.curs_a(:, 2) = ex.bin.data{:, ayMask};
 end   
 
 % trial information
