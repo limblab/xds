@@ -94,9 +94,9 @@ class lab_data:
         if self.has_force == 1:
             self.force = xds['force'][0][0]
         if self.has_kin == 1:
-            self.kin_p = xds['kin_p'][0][0]
-            self.kin_v = xds['kin_v'][0][0]
-            self.kin_a = xds['kin_a'][0][0]
+            self.curs_p = xds['curs_p'][0][0]
+            self.curs_v = xds['curs_v'][0][0]
+            self.curs_a = xds['curs_a'][0][0]
             
         self.trial_target_corners = xds['trial_target_corners'][0][0]
         self.trial_target_dir = xds['trial_target_dir'][0][0]
