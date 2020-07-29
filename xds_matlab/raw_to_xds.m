@@ -30,7 +30,9 @@ ex.meta.hasUnits = true;
 ex.meta.hasTrials = true; 
 ex.meta.hasForce = cds.meta.hasForce;
 ex.meta.hasKinematics = cds.meta.hasKinematics;
-
+if isempty(cds.kin) && ~isempty(cds.cursor)
+    ex.meta.hasKinematics = 1;
+    
 ex.binConfig.filterConfig.sampleRate = 1/bin_width;
 ex.binConfig.filterConfig.poles = 2;
 ex.binConfig.filterConfig.cutoff = 10;
@@ -141,6 +143,14 @@ if ex.meta.hasKinematics == true
    xds.kin_v(:, 2) = ex.bin.data{:, vyMask};
    xds.kin_a(:, 1) = ex.bin.data{:, axMask};
    xds.kin_a(:, 2) = ex.bin.data{:, ayMask};
+   if isempty(cds.kin) && ~isempty(cds.cursor)
+       xds.cursor_p = xds.kin_p;
+       xds.cursor_v = xds.kin_v;
+       xds.cursor_a = xds.kin_a;
+       xds = rmfield(xds,'kin_p');
+       xds = rmfield(xds,'kin_v');
+       xds = rmfield(xds,'kin_a');
+   end
 end   
 
 % trial information
@@ -156,6 +166,7 @@ xds.trial_target_corners = deal_trial_info('Corners', cds);
 
 clear cds
 clear ex
+end
 end
 
 function trial_info = deal_trial_info(str,cds)
