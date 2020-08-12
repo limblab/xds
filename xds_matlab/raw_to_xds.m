@@ -150,6 +150,10 @@ if ex.meta.hasKinematics == true
        xds = rmfield(xds,'kin_p');
        xds = rmfield(xds,'kin_v');
        xds = rmfield(xds,'kin_a');
+       xds.has_kin = 0;
+       xds.has_cursor = 1;
+   else
+       xds.has_cursor = 0;
    end
 end   
 
