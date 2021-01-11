@@ -30,8 +30,10 @@ ex.meta.hasUnits = true;
 ex.meta.hasTrials = true; 
 ex.meta.hasForce = cds.meta.hasForce;
 ex.meta.hasKinematics = cds.meta.hasKinematics;
+ex.meta.hasLfp = cds.meta.hasLfp;
 if isempty(cds.kin) && ~isempty(cds.cursor)
     ex.meta.hasKinematics = 1;
+end
     
 ex.binConfig.filterConfig.sampleRate = 1/bin_width;
 ex.binConfig.filterConfig.poles = 2;
@@ -58,6 +60,17 @@ end
 if ex.meta.hasForce == true
    ex.binConfig.include(field_ind).field = 'force';
 end
+
+% if ex.meta.hasLfp == true
+%    ex.binConfig.include(field_ind).field = 'lfp';
+% end
+
+%^The above block of text is sometimes necessary if you're converting files
+%from monkeys that have multiple implants. Such a file can have only
+%units and LFP with no EMG/kinematics/cursor data, because the
+%EMG/kinematics/cursor data is in the file recorded from the other array;
+%trying to create an XDS with only units causes the experiment processing to
+%fail, and so that requires the inclusion of LFP in the experiment processing. 
 ex.binData;
 
 xds.meta = cds.meta;
@@ -170,7 +183,6 @@ xds.trial_target_corners = deal_trial_info('Corners', cds);
 
 clear cds
 clear ex
-end
 end
 
 function trial_info = deal_trial_info(str,cds)
