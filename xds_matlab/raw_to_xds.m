@@ -150,24 +150,12 @@ if ex.meta.hasKinematics == true
    vyMask = ~cellfun(@(x)isempty(strfind(x,'vy')),ex.bin.data.Properties.VariableNames);
    axMask = ~cellfun(@(x)isempty(strfind(x,'ax')),ex.bin.data.Properties.VariableNames);
    ayMask = ~cellfun(@(x)isempty(strfind(x,'ay')),ex.bin.data.Properties.VariableNames);
-   xds.kin_p(:, 1) = ex.bin.data{:, xMask};
-   xds.kin_p(:, 2) = ex.bin.data{:, yMask};
-   xds.kin_v(:, 1) = ex.bin.data{:, vxMask};
-   xds.kin_v(:, 2) = ex.bin.data{:, vyMask};
-   xds.kin_a(:, 1) = ex.bin.data{:, axMask};
-   xds.kin_a(:, 2) = ex.bin.data{:, ayMask};
-   if isempty(cds.kin) && ~isempty(cds.cursor)
-       xds.cursor_p = xds.kin_p;
-       xds.cursor_v = xds.kin_v;
-       xds.cursor_a = xds.kin_a;
-       xds = rmfield(xds,'kin_p');
-       xds = rmfield(xds,'kin_v');
-       xds = rmfield(xds,'kin_a');
-       xds.has_kin = 0;
-       xds.has_cursor = 1;
-   else
-       xds.has_cursor = 0;
-   end
+   xds.curs_p(:, 1) = ex.bin.data{:, xMask};
+   xds.curs_p(:, 2) = ex.bin.data{:, yMask};
+   xds.curs_v(:, 1) = ex.bin.data{:, vxMask};
+   xds.curs_v(:, 2) = ex.bin.data{:, vyMask};
+   xds.curs_a(:, 1) = ex.bin.data{:, axMask};
+   xds.curs_a(:, 2) = ex.bin.data{:, ayMask};
 end   
 
 % trial information
