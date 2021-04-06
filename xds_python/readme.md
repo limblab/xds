@@ -13,8 +13,10 @@ Python 3
 numpy, scipy, pickle
 
 #### How to install
+After cloning this repo to your local machine, add the following lines at the beginning of your script:
 ```
-pip install xds
+import fnmatch, os, sys
+sys.path.append('your path to /xds/xds_python')
 ```
 
 ## Run the codes
