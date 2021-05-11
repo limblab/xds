@@ -115,9 +115,21 @@ xds.has_kin = xds.meta.hasKinematics;
 xds.sorted = sorted;
 
 % units
-elec_mask = zeros(length(cds.units), 1);
-for i = 1:length(cds.units)
-    if strfind(cds.units(i).label,'elec') == 1
+% In some data files (like those collected on Monkey Chewie in 2015) there
+% are data entries in the unit table but they are not the actual neural
+% data. In order to find them out and get rid of them later, the next lines
+% of code do a quick scan over the labels. If the labels are initialed with
+% 'elec', then the corresponding channel is neural data, and will be
+% registered in 'elec_mask'
+% Find out invalid channels based on ID number
+invalid_id = find([cds.units(:).ID] == 255);
+% Get rid of the invalid channels in the cds.unit table and get a copy
+temp_table = cds.units;
+temp_table(invalid_id) = [];
+    
+elec_mask = zeros(length(temp_table), 1);
+for i = 1:length(temp_table)
+    if strfind(temp_table(i).label,'elec') == 1
         elec_mask(i) = 1;
     end
 end
@@ -125,18 +137,45 @@ end
 if sorted == 0
     good_id = find(elec_mask == 1);
     for i = 1:length(good_id)
-        xds.unit_names{1,i} = cds.units(good_id(i)).label;
-        xds.spikes{1,i} = cds.units(good_id(i)).spikes.ts;
-        %xds.spike_waveforms{1,i} = cds.units(good_id(i)).spikes.wave;
+        xds.unit_names{1,i} = temp_table(good_id(i)).label;
+        xds.spikes{1,i} = temp_table(good_id(i)).spikes.ts;
+        %xds.spike_waveforms{1,i} = temp_table(good_id(i)).spikes.wave;
     end
+    % Finding out the column numbers for the firing rates in the table of
+    % ex.bin.data
     [~,binnedUnitMask] = ex.bin.getUnitNames;
+    % Finding out the positions of the '0's in elec_mask
     bad_id = find(elec_mask == 0);
     temp1 = find(binnedUnitMask == 1);
+    % Setting the masks for the fake channels to '0'
     for i = 1:length(bad_id)
         binnedUnitMask(temp1(bad_id(i))) = 0;
     end
 elseif sorted == 1
-    disp('Sorted version will be served later');
+    good_id = find(elec_mask == 1);
+    k = 1;
+    for i = 1:length(good_id)
+        if (temp_table(i).ID ~= 0)&(temp_table(i).ID ~= 255)
+            xds.unit_names{1, k} = strcat(temp_table(good_id(i)).label,...
+                strcat('_', char(string(temp_table(i).ID))) );
+            xds.spikes{1, k} = temp_table(good_id(i)).spikes.ts;
+            %xds.spike_waveforms{1,k} = temp_table(good_id(i)).spikes.wave;
+            k = k + 1;
+        end 
+    end
+    
+    [~,binnedUnitMask] = ex.bin.getUnitNames;
+    
+    bad_id = find(elec_mask == 0);
+    nonsorted_id = find([temp_table(:).ID] == 0);
+    
+    temp1 = find(binnedUnitMask == 1);
+    for i = 1:length(bad_id)
+        binnedUnitMask(temp1(bad_id(i))) = 0;
+    end 
+    for i = 1:length(nonsorted_id)
+        binnedUnitMask(temp1(nonsorted_id(i))) = 0;
+    end
 end
 
 xds.spike_counts = ex.bin.data{:,binnedUnitMask}*bin_width;
