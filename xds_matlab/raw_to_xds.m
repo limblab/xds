@@ -24,7 +24,8 @@ function xds = raw_to_xds(file_dir, file_name, map_dir, map_name, params)
 %   bin_width           width to bin the spiking and EMG
 %   sorted              Is the file sorted? (0/1 or true/false)
 %   requires_raw_emg    True for all EMG recordings
-%
+%   save_waveforms      0 for not saving spike waveforms, 1 for saving
+%                       spike waveforms
 %
 % -- Outputs --
 % xds                   The XDS file structure
@@ -49,6 +50,12 @@ if isfield(params,'requires_raw_emg')
 end
 if isfield(params,'requires_raw_force')
     requires_raw_force = params.requires_raw_force;
+end
+
+% Whether to save the spike waveforms
+save_waveforms = 0;
+if isfield(params, 'save_waveforms')
+    save_waveforms = 1;
 end
 
 cds=commonDataStructure();
@@ -139,7 +146,9 @@ if sorted == 0
     for i = 1:length(good_id)
         xds.unit_names{1,i} = temp_table(good_id(i)).label;
         xds.spikes{1,i} = temp_table(good_id(i)).spikes.ts;
-        %xds.spike_waveforms{1,i} = temp_table(good_id(i)).spikes.wave;
+        if save_waveforms == 1
+           xds.spike_waveforms{1,i} = temp_table(good_id(i)).spikes.wave;
+        end
     end
     % Finding out the column numbers for the firing rates in the table of
     % ex.bin.data
@@ -159,7 +168,9 @@ elseif sorted == 1
             xds.unit_names{1, k} = strcat(temp_table(good_id(i)).label,...
                 strcat('_', char(string(temp_table(i).ID))) );
             xds.spikes{1, k} = temp_table(good_id(i)).spikes.ts;
-            %xds.spike_waveforms{1,k} = temp_table(good_id(i)).spikes.wave;
+            if save_waveforms == 1
+               xds.spike_waveforms{1,k} = temp_table(good_id(i)).spikes.wave;
+            end
             k = k + 1;
         end 
     end
