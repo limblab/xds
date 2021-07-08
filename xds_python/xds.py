@@ -143,6 +143,8 @@ class lab_data:
         return a
     
     def save_to_pickle(self, path, file_name = 0):
+        if path[-1] != '/':
+            path = path + '/'
         if file_name == 0:
             f = path + self.file_name + '.pkl'
         else:
