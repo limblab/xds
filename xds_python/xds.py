@@ -9,6 +9,7 @@ from os import path
 from collections import defaultdict
 from utils import parse_h5py, parse_scipy
 from utils import get_char_pos, get_paired_EMG_index, find_bad_EMG_index_from_list, delete_paired_bad_channel
+from utils import find_force_onset
 
 if sys.version[0] == '2':
     import cPickle as pickle
@@ -184,6 +185,19 @@ class lab_data:
                     del(each[idx])
             print('Trials with nan timings have been removed!')
         
+    def compute_force_onset_time(self):
+        if hasattr(self, 'force'):
+            idx = [np.where((self.time_frame > t[0]) & (self.time_frame < t[1]) )[0] 
+                   for t in zip(self.trial_start_time, self.trial_end_time)]
+            trial_time_frame = [self.time_frame[n] for n in idx]
+            trial_force = [self.force[n] for n in idx]
+            idx_onset = find_force_onset(trial_force, 0, 0.4)
+            time_onset = [trial_time_frame[i][idx_onset[i]] for i in range(len(trial_time_frame))]
+            print('Get the force onset time!')
+            self.trial_force_onset_time = np.asarray(time_onset)
+        else:
+            print('There is no force data in this file')
+    
     def get_trials_idx(self, my_type, start_event, time_before_start, end_event = 'end_time', time_after_end = 0, raw_flag = 0):
         """
         This function returns a list containing the indices for extracting the data for each trial
@@ -213,6 +227,11 @@ class lab_data:
             time_start = self.trial_gocue_time
         elif start_event == 'end_time':
             time_start = self.trial_end_time
+        elif start_event == 'force_onset_time':
+            try:
+                time_start = self.trial_force_onset_time
+            except Exception:
+                print('Compute force onset time first')
             
         if end_event == 'start_time':
             time_end = self.trial_start_time
@@ -220,6 +239,11 @@ class lab_data:
             time_end = self.trial_gocue_time
         elif end_event == 'end_time':
             time_end = self.trial_end_time
+        elif end_event == 'force_onset_time':
+            try:
+                time_end = self.trial_force_onset_time
+            except Exception:
+                print('Compute force onset time first')
         
         type_trial = np.where(self.trial_result == my_type)[0]
         trials_idx = []
@@ -711,8 +735,10 @@ class lab_data_DSPW_EMG(lab_data):
         sync_line1 = rhd_data['board_dig_in_data'][1]
         d0 = np.where(sync_line0 == True)[0]
         d1 = np.where(sync_line1 == True)[0]
-        ds = int(d1[0] - int((d1[0]-d0[0])*0.2))
-        de = int(d1[-1] + int((d0[-1]-d1[-1])*0.2))
+        ds = int(d0[0])
+        de = int(d1[-1])
+        #ds = int(d1[0] - int((d1[0]-d0[0])*0.2))
+        #de = int(d1[-1] + int((d0[-1]-d1[-1])*0.2))
         rhd_timeframe = np.arange(de-ds+1)/self.EMG_fs
         return EMG_names, list(EMG_diff[:, ds:de]), rhd_timeframe
     
