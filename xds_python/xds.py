@@ -266,6 +266,27 @@ class lab_data:
                 trials_idx.append(idx)
         return trials_idx
     
+    def get_trial_info(self, my_type = 'R'):
+        trial_info_list = []
+        type_trial = np.where(self.trial_result == my_type)[0]
+        if len(type_trial)>0:
+            for each in type_trial:
+                trial_info = {}
+                trial_info['trial_result'] = self.trial_result[each]
+                trial_info['trial_target_dir'] = self.trial_target_dir[each]
+                trial_info['trial_gocue_time'] = self.trial_gocue_time[each]
+                trial_info['trial_start_time'] = self.trial_start_time[each]
+                trial_info['trial_end_time'] = self.trial_end_time[each]
+                trial_info['trial_target_corners'] = self.trial_target_corners[each, :]
+                if hasattr(self, 'trial_force_onset_time'):
+                    trial_info['trial_force_onset_time'] = self.trial_force_onset_time[each]
+                if hasattr(self, 'trial_target_center_x'):
+                    trial_info['trial_target_center_x'] = self.trial_target_center_x[each]
+                if hasattr(self, 'trial_target_center_y'):
+                    trial_info['trial_target_center_y'] = self.trial_target_center_y[each]
+                trial_info_list.append(trial_info)
+        return trial_info_list         
+    
     def get_trials_data_spike_counts(self, my_type = 'R', trial_start = 'start_time', time_ahead = 0, end_event = 'end_time', end_time_offset = 0):
         idx = self.get_trials_idx(my_type, trial_start, time_ahead, end_event, end_time_offset)
         trial_spike_counts = [self.spike_counts[n, :] for n in idx]
