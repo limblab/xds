@@ -277,10 +277,17 @@ def delete_paired_bad_channel(EMG_names_single, bad_EMG):
     print('The numbers of these bad channels are %s' % (bad_paired_channel))
     return bad_paired_channel, bad_EMG_post
 
-           
-
-
-
+def find_force_onset(force_list, ch, thr = 0.4):
+    onset_num = []
+    for each in force_list:
+        f = each[:, ch]#np.sqrt(each[:, 0]**2 + each[:, 1]**2)
+        df = np.diff(f)
+        temp = np.where(df >= thr*np.max(df))[0]              
+        if len(temp) == 0:
+            onset_num.append(0)
+        else:
+            onset_num.append(temp[0])
+    return onset_num                 
 
 
 

@@ -7,9 +7,9 @@ import copy
 import os.path
 from os import path
 from collections import defaultdict
-from utils import parse_h5py, parse_scipy
-from utils import get_char_pos, get_paired_EMG_index, find_bad_EMG_index_from_list, delete_paired_bad_channel
-from utils import find_force_onset
+from xds_utils import parse_h5py, parse_scipy
+from xds_utils import get_char_pos, get_paired_EMG_index, find_bad_EMG_index_from_list, delete_paired_bad_channel
+from xds_utils import find_force_onset
 
 if sys.version[0] == '2':
     import cPickle as pickle
@@ -626,8 +626,8 @@ class lab_data:
         """
         idx = self.get_electrode_idx(elec_num)
         for d in sorted(idx, reverse=True):
-            del(self.unit_names[idx])
-            del(self.spikes[idx])
+            del(self.unit_names[d])
+            del(self.spikes[d])
         self.spike_counts = np.delete(self.spike_counts, idx, axis = 1)
    
 ###################################################################################################################################
