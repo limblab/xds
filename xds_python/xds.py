@@ -117,7 +117,7 @@ class lab_data:
         if '_MG_' in self.file_name:
             try:
                 idx = self.trial_info_table_header.index('gadgetNumber')
-                self.gadget_number = np.asarray(self.trial_info_table[idx]).squeeze()
+                self.trial_gadget_number = np.asarray(self.trial_info_table[idx]).squeeze()
             except Exception:
                 print('Lack of gadget information in the data file!')
             
