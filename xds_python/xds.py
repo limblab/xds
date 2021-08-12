@@ -97,6 +97,10 @@ class lab_data:
                 pass       
         else:
             self.n_force = 0
+            
+        # -------- get rid of trials with nan timings -------- #
+        self.clean_up_trials()
+        
         # -------- find out the target centers -------- #
         try:
             idx = self.trial_info_table_header.index('tgtCtr')
@@ -108,8 +112,14 @@ class lab_data:
         target_center = np.asarray(self.trial_info_table[idx]).squeeze()
         self.trial_target_center_x = target_center[:, 0]
         self.trial_target_center_y = target_center[:, 1]
-        # -------- get rid of trials with nan timings -------- #
-        self.clean_up_trials()
+        
+        # -------- for multigadget files with more than 1 gadget activated, find out the gadget number --------- #
+        if '_MG_' in self.file_name:
+            try:
+                idx = self.trial_info_table_header.index('gadgetNumber')
+                self.gadget_number = np.asarray(self.trial_info_table[idx]).squeeze()
+            except Exception:
+                print('Lack of gadget information in the data file!')
             
     def get_meta(self):
         a = dict()
@@ -185,13 +195,13 @@ class lab_data:
                     del(each[idx])
             print('Trials with nan timings have been removed!')
         
-    def compute_force_onset_time(self):
+    def compute_force_onset_time(self, channel = 0):
         if hasattr(self, 'force'):
             idx = [np.where((self.time_frame > t[0]) & (self.time_frame < t[1]) )[0] 
                    for t in zip(self.trial_start_time, self.trial_end_time)]
             trial_time_frame = [self.time_frame[n] for n in idx]
             trial_force = [self.force[n] for n in idx]
-            idx_onset = find_force_onset(trial_force, 0, 0.4)
+            idx_onset = find_force_onset(trial_force, channel, 0.4)
             time_onset = [trial_time_frame[i][idx_onset[i]] for i in range(len(trial_time_frame))]
             print('Get the force onset time!')
             self.trial_force_onset_time = np.asarray(time_onset)
