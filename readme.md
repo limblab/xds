@@ -1,5 +1,7 @@
 # xds (cross-platform data structure), as a wrap for `cds` to be used in Python
 
+The latest updates are in the branch "wireless_EMG", which also supports EMGs collected using wired systems. Will merge with the main branch soon.
+
 ## Overview
 `cds` (Classy data structure) is the standard data structure to load data collected in lab. Currently, Python packages including scipy and h5py are not friendly to MATLAB classes and tables, so here we create this wrap to break those high-level MATLAB structures into simpler components. 
 
