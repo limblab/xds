@@ -565,7 +565,7 @@ class lab_data:
         else:      
             return trial_all_target
         
-    def sort_trials_target_center(self, x_or_y, data_type, target_center_list, trial_type, time_params, EMG_channels = 'all'):
+    def sort_trials_target_center(self, x_or_y, data_type, target_center_list, trial_type, time_params, EMG_channels = 'all', gadget_number = -1):
         start_event = time_params['start_event']
         ahead = time_params['time_before_start']
         end_event = time_params['end_event']
@@ -604,7 +604,10 @@ class lab_data:
                 target_center_idx = np.where(self.trial_target_center_x == each)[0]
             elif x_or_y == 'y':
                 target_center_idx = np.where(self.trial_target_center_y == each)[0]
-            b = list(set(trial_type_idx).intersection(set(target_center_idx)))
+            b = list(set(trial_type_idx) & set(target_center_idx))
+            if gadget_number != -1:
+                gadget_number_idx = np.where(self.trial_gadget_number == gadget_number)[0]
+                b = list(set(trial_type_idx) & set(target_center_idx) & set(gadget_number_idx))
             c = sorted([np.where(trial_type_idx == each)[0][0] for each in b])
             if data_type == 'cursor':
                 trial_all_curs_p.append([data[0][i] for i in c])
