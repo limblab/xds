@@ -315,8 +315,9 @@ class lab_data:
             if EMG_channels == 'all':
                 return [self.EMG[n, :] for n in idx]
             else:
-               EMG_channels_idx = [self.EMG_names.index(each) for each in EMG_channels] 
-               return [self.EMG[n, EMG_channels_idx] for n in idx]
+               EMG_channels_idx = [self.EMG_names.index(each) for each in EMG_channels]
+               temp = self.EMG[:, EMG_channels_idx]
+               return [temp[n, :] for n in idx]
         
     def get_trials_data_raw_EMG(self, my_type = 'R', trial_start = 'start_time', time_ahead = 0, end_event = 'end_time', end_time_offset = 0, EMG_channels = 'all'):
         if self.has_EMG == 0:
