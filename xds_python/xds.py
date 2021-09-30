@@ -208,7 +208,7 @@ class lab_data:
         else:
             print('There is no force data in this file')
     
-    def get_trials_idx(self, my_type, start_event, time_before_start, end_event = 'end_time', time_after_end = 0, raw_flag = 0):
+    def get_trials_idx(self, my_type, start_event, time_before_start, end_event = 'end_time', time_after_end = 0, raw_flag = 0, gadget_number = -1):
         """
         This function returns a list containing the indices for extracting the data for each trial
 
@@ -224,6 +224,8 @@ class lab_data:
             Specifying the end event for each trial. The default is 'end_time'.
         time_after_end : float, optional
             The time after the trial_end event. The default is 0.
+        gadget_number: bool, optional
+            The number of the gadget in Multi-gadget (MG) task, typically used for discriminate PG and KEY trials.
 
         Returns
         -------
@@ -255,7 +257,14 @@ class lab_data:
             except Exception:
                 print('Compute force onset time first')
         
+        # Get the indices of a specific type of trials, 'R' or 'F'
         type_trial = np.where(self.trial_result == my_type)[0]
+        # If gadget number is something, not -1, then do this:
+        if gadget_number != -1:
+            # The number of trials with a specific gadget number
+            gadget_trial = np.where(self.trial_gadget_number == gadget_number)[0]
+            temp = sorted(list(set(type_trial)&set(gadget_trial)))
+            type_trial = temp
         trials_idx = []
         if len(type_trial) > 0:
             for n in type_trial:
@@ -276,9 +285,14 @@ class lab_data:
                 trials_idx.append(idx)
         return trials_idx
     
-    def get_trial_info(self, my_type = 'R'):
+    def get_trial_info(self, my_type = 'R', gadget_number = -1):
         trial_info_list = []
         type_trial = np.where(self.trial_result == my_type)[0]
+        if gadget_number != -1:
+            # The number of trials with a specific gadget number
+            gadget_trial = np.where(self.trial_gadget_number == gadget_number)[0]
+            temp = sorted(list(set(type_trial)&set(gadget_trial)))
+            type_trial = temp
         if len(type_trial)>0:
             for each in type_trial:
                 trial_info = {}
@@ -294,24 +308,29 @@ class lab_data:
                     trial_info['trial_target_center_x'] = self.trial_target_center_x[each]
                 if hasattr(self, 'trial_target_center_y'):
                     trial_info['trial_target_center_y'] = self.trial_target_center_y[each]
+                if hasattr(self, 'trial_gadget_number'):
+                    trial_info['trial_gadget_number'] = self.trial_gadget_number[each]
                 trial_info_list.append(trial_info)
         return trial_info_list         
     
-    def get_trials_data_spike_counts(self, my_type = 'R', trial_start = 'start_time', time_ahead = 0, end_event = 'end_time', end_time_offset = 0):
-        idx = self.get_trials_idx(my_type, trial_start, time_ahead, end_event, end_time_offset)
+    def get_trials_data_spike_counts(self, my_type = 'R', trial_start = 'start_time', time_ahead = 0, end_event = 'end_time', end_time_offset = 0, gadget_number = -1):
+        idx = self.get_trials_idx(my_type, trial_start, time_ahead, end_event, 
+                                  end_time_offset, gadget_number = gadget_number)
         trial_spike_counts = [self.spike_counts[n, :] for n in idx]
         return trial_spike_counts
     
-    def get_trials_data_time_frame(self, my_type = 'R', trial_start = 'start_time', time_ahead = 0, end_event = 'end_time', end_time_offset = 0):
-        idx = self.get_trials_idx(my_type, trial_start, time_ahead, end_event, end_time_offset)
+    def get_trials_data_time_frame(self, my_type = 'R', trial_start = 'start_time', time_ahead = 0, end_event = 'end_time', end_time_offset = 0, gadget_number = -1):
+        idx = self.get_trials_idx(my_type, trial_start, time_ahead, end_event, 
+                                  end_time_offset, gadget_number = gadget_number)
         return [self.time_frame[n] for n in idx]
     
-    def get_trials_data_EMG(self, my_type = 'R', trial_start = 'start_time', time_ahead = 0, end_event = 'end_time', end_time_offset = 0, EMG_channels = 'all'):
+    def get_trials_data_EMG(self, my_type = 'R', trial_start = 'start_time', time_ahead = 0, end_event = 'end_time', end_time_offset = 0, EMG_channels = 'all', gadget_number = -1):
         if self.has_EMG == 0:
             print('There is no EMG in this file')
             return 0
         else:
-            idx = self.get_trials_idx(my_type, trial_start, time_ahead, end_event, end_time_offset)
+            idx = self.get_trials_idx(my_type, trial_start, time_ahead, end_event, 
+                                      end_time_offset, gadget_number = gadget_number)
             if EMG_channels == 'all':
                 return [self.EMG[n, :] for n in idx]
             else:
@@ -319,27 +338,29 @@ class lab_data:
                temp = self.EMG[:, EMG_channels_idx]
                return [temp[n, :] for n in idx]
         
-    def get_trials_data_raw_EMG(self, my_type = 'R', trial_start = 'start_time', time_ahead = 0, end_event = 'end_time', end_time_offset = 0, EMG_channels = 'all'):
+    def get_trials_data_raw_EMG(self, my_type = 'R', trial_start = 'start_time', time_ahead = 0, end_event = 'end_time', end_time_offset = 0, EMG_channels = 'all', gadget_number = -1):
         if self.has_EMG == 0:
             print('There is no EMG in this file')
             return 0
         else:
-            idx = self.get_trials_idx(my_type, trial_start, time_ahead, end_event, end_time_offset, 1)
+            idx = self.get_trials_idx(my_type, trial_start, time_ahead, end_event, 
+                                      end_time_offset, 1, gadget_number = gadget_number)
             if EMG_channels == 'all':
                 return [self.raw_EMG[n, :] for n in idx]
             else:
                EMG_channels_idx = [self.EMG_names.index(each) for each in EMG_channels] 
                return [self.raw_EMG[n, EMG_channels_idx] for n in idx]
 
-    def get_trials_data_force(self, my_type = 'R', trial_start = 'start_time', time_ahead = 0, end_event = 'end_time', end_time_offset = 0):
+    def get_trials_data_force(self, my_type = 'R', trial_start = 'start_time', time_ahead = 0, end_event = 'end_time', end_time_offset = 0, gadget_number = -1):
         if self.has_force == 0:
             print('There is no force in this file')
             return 0
         else:
-            idx = self.get_trials_idx(my_type, trial_start, time_ahead, end_event, end_time_offset)
+            idx = self.get_trials_idx(my_type, trial_start, time_ahead, end_event, 
+                                      end_time_offset, gadget_number = gadget_number)
             return [self.force[n, :] for n in idx]
             
-    def get_trials_data_kin(self, my_type = 'R', trial_start = 'start_time', time_ahead = 0, end_event = 'end_time', end_time_offset = 0):
+    def get_trials_data_kin(self, my_type = 'R', trial_start = 'start_time', time_ahead = 0, end_event = 'end_time', end_time_offset = 0, gadget_number = -1):
         if hasattr(self, 'has_cursor'):
             flag = self.has_cursor
         elif hasattr(self, 'has_kin'):
@@ -349,13 +370,14 @@ class lab_data:
             print('There is no cursor trajectories in this file!')
             return 0
         else:
-            idx = self.get_trials_idx(my_type, trial_start, time_ahead, end_event, end_time_offset)
+            idx = self.get_trials_idx(my_type, trial_start, time_ahead, end_event, 
+                                      end_time_offset, gadget_number = gadget_number)
             if hasattr(self, 'curs_p'):
                 return [self.curs_p[n, :] for n in idx], [self.curs_v[n, :] for n in idx], [self.curs_a[n, :] for n in idx]
             elif hasattr(self, 'kin_p'):
                 return [self.kin_p[n, :] for n in idx], [self.kin_v[n, :] for n in idx], [self.kin_a[n, :] for n in idx]
     
-    def get_trials_data_cursor(self, my_type = 'R', trial_start = 'start_time', time_ahead = 0, end_event = 'end_time', end_time_offset = 0):
+    def get_trials_data_cursor(self, my_type = 'R', trial_start = 'start_time', time_ahead = 0, end_event = 'end_time', end_time_offset = 0, gadget_number = -1):
         if hasattr(self, 'has_cursor'):
             flag = self.has_cursor
         elif hasattr(self, 'has_kin'):
@@ -365,16 +387,17 @@ class lab_data:
             print('There is no cursor trajectories in this file!')
             return 0
         else:
-            idx = self.get_trials_idx(my_type, trial_start, time_ahead, end_event, end_time_offset)
+            idx = self.get_trials_idx(my_type, trial_start, time_ahead, end_event, 
+                                      end_time_offset, gadget_number = gadget_number)
             if hasattr(self, 'curs_p'):
                 return [self.curs_p[n, :] for n in idx], [self.curs_v[n, :] for n in idx], [self.curs_a[n, :] for n in idx]
             elif hasattr(self, 'kin_p'):
                 return [self.kin_p[n, :] for n in idx], [self.kin_v[n, :] for n in idx], [self.kin_a[n, :] for n in idx]
       
     def get_trials_data_spikes(self, my_type = 'R', trial_start = 'start_time', 
-                          time_ahead = 0, end_event = 'end_time', end_time_offset = 0):
+                          time_ahead = 0, end_event = 'end_time', end_time_offset = 0, gadget_number = -1):
         trial_spike = []
-        trial_time_frame = self.get_trials_data_time_frame(my_type, trial_start, time_ahead, end_event, end_time_offset)
+        trial_time_frame = self.get_trials_data_time_frame(my_type, trial_start, time_ahead, end_event, end_time_offset, gadget_number)
         for i, t in enumerate(trial_time_frame):
             temp = []
             for j, spike in enumerate(self.spikes):
