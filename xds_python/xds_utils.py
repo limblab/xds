@@ -177,8 +177,9 @@ def parse_scipy(path, file_name):
             pass
     # -------- in some files this flag is not right, so we need to fix it -------- #
     if parsed['has_cursor'] == 0:
-        if ('curs_p' in parsed.keys())&(len(parsed['curs_p'])>0):
-            parsed['has_cursor'] = 1
+        if 'curs_p' in parsed.keys():
+            if len(parsed['curs_p'])>0:
+                parsed['has_cursor'] = 1
     
     try:
         parsed['raw_EMG'] = xds['raw_EMG'][0][0]
