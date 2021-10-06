@@ -82,9 +82,17 @@ def parse_h5py(path, file_name):
                 if len(parsed['curs_p'])>0:
                     parsed['has_cursor'] = 1
     
+    # -------- handling trial timing related variables -------- #
     parsed['trial_start_time'] = np.asarray(xds['trial_start_time']).reshape((-1, ))
     parsed['trial_end_time'] = np.asarray(xds['trial_end_time']).reshape((-1, ))
-    parsed['trial_gocue_time'] = np.asarray(xds['trial_gocue_time']).reshape((-1, ))
+    # -------- gocue_time may have different format from different tasks -------- #
+    if xds['trial_gocue_time'].shape[0] == 1:
+        parsed['trial_gocue_time'] = np.asarray(xds['trial_gocue_time']).reshape((-1, ))
+    elif xds['trial_gocue_time'].shape[0] > 1:
+        parsed['trial_gocue_time'] = np.asarray(xds['trial_gocue_time']).T
+    else:
+        print('something wrong with the gocue time')
+    # -------- handling target related variables -------- #
     parsed['trial_target_dir'] = np.asarray(xds['trial_target_dir']).reshape((-1, ))
     parsed['trial_target_corners'] = np.asarray(xds['trial_target_corners']).T
     parsed['trial_result'] = np.asarray([chr(each) for each in np.asarray(xds['trial_result']).reshape((-1, ))])
