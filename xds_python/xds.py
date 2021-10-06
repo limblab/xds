@@ -184,7 +184,7 @@ class lab_data:
         union_nan_idx = np.asarray(sorted(list(set(gocue_nan_idx).union(set(start_nan_idx)).union(set(end_nan_idx))),
                                           reverse = True))
         if len(union_nan_idx)>0:
-            self.trial_gocue_time = np.delete(self.trial_gocue_time, union_nan_idx)
+            self.trial_gocue_time = np.delete(self.trial_gocue_time, union_nan_idx, axis = 0)
             self.trial_start_time = np.delete(self.trial_start_time, union_nan_idx)
             self.trial_end_time = np.delete(self.trial_end_time, union_nan_idx)
             self.trial_result = np.delete(self.trial_result, union_nan_idx)
@@ -303,11 +303,17 @@ class lab_data:
             for each in type_trial:
                 trial_info = {}
                 trial_info['trial_result'] = self.trial_result[each]
-                trial_info['trial_target_dir'] = self.trial_target_dir[each]
+                try:
+                    trial_info['trial_target_dir'] = self.trial_target_dir[each]
+                except Exception:
+                    pass #print('Target directions not applicable')
                 trial_info['trial_gocue_time'] = self.trial_gocue_time[each]
                 trial_info['trial_start_time'] = self.trial_start_time[each]
                 trial_info['trial_end_time'] = self.trial_end_time[each]
-                trial_info['trial_target_corners'] = self.trial_target_corners[each, :]
+                try:
+                    trial_info['trial_target_corners'] = self.trial_target_corners[each, :]
+                except Exception:
+                    pass #print('Target corners not applicable')
                 if hasattr(self, 'trial_force_onset_time'):
                     trial_info['trial_force_onset_time'] = self.trial_force_onset_time[each]
                 if hasattr(self, 'trial_target_center_x'):
