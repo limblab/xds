@@ -188,8 +188,14 @@ class lab_data:
             self.trial_start_time = np.delete(self.trial_start_time, union_nan_idx)
             self.trial_end_time = np.delete(self.trial_end_time, union_nan_idx)
             self.trial_result = np.delete(self.trial_result, union_nan_idx)
-            self.trial_target_dir = np.delete(self.trial_target_dir, union_nan_idx)
-            self.trial_target_corners = np.delete(self.trial_target_corners, union_nan_idx, axis = 0)
+            try:
+                self.trial_target_dir = np.delete(self.trial_target_dir, union_nan_idx)
+            except Exception:
+                print('Target direction not applicable')
+            try:
+                self.trial_target_corners = np.delete(self.trial_target_corners, union_nan_idx, axis = 0)
+            except Exception:
+                print('Target corners not applicable')
             for each in self.trial_info_table:
                 for idx in union_nan_idx:
                     del(each[idx])
