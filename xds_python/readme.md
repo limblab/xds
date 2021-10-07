@@ -19,6 +19,51 @@ import fnmatch, os, sys
 sys.path.append('your path to /xds/xds_python')
 ```
 
+## A typical work flow
+Following the codes below in your own programs
+```
+import numpy as np
+import fnmatch, os
+from xds import lab_data
+import pickle
+
+bin_size = 0.05 # The unit is second
+smooth_window_size = 0.1 # The unit is second
+
+# Specifying the data path, and find out the .mat file under the path
+# The program can hadle different formats of the .mat file (v7.3 or not) automatically
+base_path = 'your_path/'
+mat_list = np.sort(fnmatch.filter(os.listdir(base_path), "*.mat"))
+
+# Load the data file
+my_lab_data = lab_data(base_path, mat_list[0])
+print(my_lab_data.get_meta())
+
+# Get spike counts for each trial and save as a list
+spike_counts = my_lab_data.get_trials_data_spike_counts('R', 'start_time', 0, 'end_time', 0)
+
+# Bin the spikes to get firing rates
+my_lab_data.update_bin_data(bin_size)
+ 
+# Do the smoothing with a Gaussian kernel 
+my_lab_data.smooth_binned_spikes(bin_size, 'gaussian', smooth_window_size)
+
+# Altenatively, you can do the smoothing with a causal-Gaussian kernel
+my_lab_data.smooth_binned_spikes(bin_size, 'half_gaussian', smooth_window_size)
+
+# Get EMGs for each trial and save as a list
+EMG = my_lab_data.get_trials_data_EMG('R', 'start_time', 0, 'end_time', 0)
+
+# Get cursor related kinematics for each trial and save as 3 lists
+cursor_position, cursor_velocity, cursor_acc = my_lab_data.get_trials_data_cursor('R', 'start_time', 0, 'end_time', 0)
+
+# Get forces for each trial and save as a list
+force = my_lab_data.get_trials_data_force('R', 'gocue_time', 0, 'end_time', 0)
+```
+
+
+
+
 ## Run the codes
 #### Loading the data file and construct `lab_data` object
 An example `.mat` data file (`Chewie_20150713_001.mat`) is already under the `/data` directory. 
@@ -216,18 +261,6 @@ with open ('path_and_file_name', 'rb') as fp:
     my_data = pickle.load(fp)  
 spike_counts = my_data.spike_counts 
 ```
-
-#### Other functions
-There are two non-member functions, and the names of them are self-explanatory:
-```
-#                                          binned width     kernel sd
-smoothed = smooth_binned_spikes(spike_counts, 0.02, 'gaussian', 0.02)
-```
-and
-```
-array_train_data_spike_counts = list_to_nparray(train_data_spike_counts)
-```
-Here the input is a `list`, while the output is a `numpy` array
 
 
 
