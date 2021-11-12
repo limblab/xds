@@ -53,6 +53,16 @@ trial_result = xds.trial_result;
 
 %% Here are some useful functions
 
+% The original .mat file contains binned data. They are usually binned with
+% very small bin size, like 0.001 s or 0.01 s. But sometimes you may need 
+% larger bin size. To rebin the spike trains, you can use the
+% update_bin_data function. Note that this will update all the attributes
+% of xds.
+% xds = update_bin_data(xds, new_bin_size)
+
+% Re-bin with new_bin_size of 0.05 s
+xds = update_bin_data(xds, 0.05);
+
 % if you want to smooth the spike counts, you can use the
 % smooth_spike_counts function:
 % smoothed_spike_counts = smooth_spike_counts(xds, gaussian kernel sd, sqrt transform or not)
