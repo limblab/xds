@@ -1,8 +1,9 @@
 function [smoothed_spike_counts] = smooth_spike_counts( xds,varargin )
-if nargin == 2
+
+optargin = numel(varargin);
+kernel_SD = 0.05;
+if optargin > 0
     kernel_SD = varargin{1};
-else
-    kernel_SD = 0.05;
 end
 
 if nargin >= 3
