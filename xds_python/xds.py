@@ -534,7 +534,7 @@ class lab_data:
         if sqrt == 1:
             for (i, each) in enumerate(binned_spikes):
                 binned_spikes[i] = np.sqrt(each)
-        kernel_hl = np.ceil( 3 * kernel_SD / bin_size )
+        kernel_hl = 3 * int( kernel_SD / bin_size )
         normalDistribution = stats.norm(0, kernel_SD)
         x = np.arange(-kernel_hl*bin_size, (kernel_hl+1)*bin_size, bin_size)
         kernel = normalDistribution.pdf(x)
