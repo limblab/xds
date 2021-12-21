@@ -48,6 +48,7 @@ kin_v = xds.kin_v;
 % Information about trials are also stored in xds structure. Here just
 % three examples. The names of them are quite straightforwrd.
 trial_start_time = xds.trial_start_time;
+trial_gocue_time = xds.trial_gocue_time;
 trial_end_time = xds.trial_end_time;
 trial_result = xds.trial_result;
 
@@ -74,7 +75,9 @@ smoothed_spike_counts = smooth_spike_counts(xds, 0.02, 'none');
 smoothed_spike_counts = smooth_spike_counts(xds, 0.02, 'sqrt');
 
 % If you want to extract only the data within successful trials, this
-% function can work.
+% function can work. Note that you have to specify whether you want to
+% segment from "gocue_time" or"start_time" in the second argument of the 
+% get_rewarded_trials function.
 
 % The names of the variables it returns are self-explanatory. If there is
 % no EMG in this file, for example, the output 'trial_EMG' will be zero.
@@ -85,8 +88,9 @@ smoothed_spike_counts = smooth_spike_counts(xds, 0.02, 'sqrt');
 
 % In practice, you need matrix to implement algorithms. Notice the outputs of
 % this function are all cell arrays, so you may need to convert the cell
-% arrays to ordinary matrix
-[trial_spike_counts, trial_EMG, trial_force, trial_kin] = get_rewarded_trials(xds);
+% arrays to ordinary matrix. 
+start_time = "start_time";  % select either gocue_time or start_time
+[trial_spike_counts, trial_EMG, trial_force, trial_kin, trial_tgt_pos] = get_rewarded_trials(xds, start_time);
 
 
 
