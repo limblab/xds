@@ -9,7 +9,7 @@ from os import path
 from collections import defaultdict
 from xds_utils import parse_h5py, parse_scipy
 from xds_utils import get_char_pos, get_paired_EMG_index, find_bad_EMG_index_from_list, delete_paired_bad_channel
-from xds_utils import find_force_onset
+from xds_utils import find_force_onset, find_movement_onset
 
 if sys.version[0] == '2':
     import cPickle as pickle
@@ -202,6 +202,10 @@ class lab_data:
             print('Trials with nan timings have been removed!')
         
     def compute_force_onset_time(self, channel = 0):
+        """
+        The force onset time during all trials, including rewarded, failed and aborted trials
+        are calculated here
+        """
         if hasattr(self, 'force'):
             idx = [np.where((self.time_frame > t[0]) & (self.time_frame < t[1]) )[0] 
                    for t in zip(self.trial_start_time, self.trial_end_time)]
@@ -211,6 +215,23 @@ class lab_data:
             time_onset = [trial_time_frame[i][idx_onset[i]] for i in range(len(trial_time_frame))]
             print('Get the force onset time!')
             self.trial_force_onset_time = np.asarray(time_onset)
+        else:
+            print('There is no force data in this file')
+    
+    def compute_movement_onset_time(self, channel = 0, thr = 0.4):
+        """
+        This function is almost the same as the one defined above. For consistency considerations
+        here both functions are kept.
+        """
+        if (hasattr(self, 'curs_p')|hasattr(self, 'kin_p')):
+            idx = [np.where((self.time_frame > t[0]) & (self.time_frame < t[1]) )[0] 
+                   for t in zip(self.trial_start_time, self.trial_end_time)]
+            trial_time_frame = [self.time_frame[n] for n in idx]
+            trial_curs_p = [self.curs_p[n] for n in idx]
+            idx_onset = find_movement_onset(trial_curs_p, channel, thr)
+            time_onset = [trial_time_frame[i][idx_onset[i]] for i in range(len(trial_time_frame))]
+            print('Get the movement onset time!')
+            self.trial_movement_onset_time = np.asarray(time_onset)
         else:
             print('There is no force data in this file')
     
@@ -250,6 +271,11 @@ class lab_data:
                 time_start = self.trial_force_onset_time
             except Exception:
                 print('Compute force onset time first')
+        elif start_event == 'movement_onset_time':
+            try:
+                time_start = self.trial_movement_onset_time
+            except Exception:
+                print('Compute movement onset time first')
             
         if end_event == 'start_time':
             time_end = self.trial_start_time
@@ -262,6 +288,11 @@ class lab_data:
                 time_end = self.trial_force_onset_time
             except Exception:
                 print('Compute force onset time first')
+        elif end_event == 'movement_onset_time':
+            try:
+                time_end = self.trial_movement_onset_time
+            except Exception:
+                print('Compute movement onset time first')
         
         # Get the indices of a specific type of trials, 'R' or 'F'
         type_trial = np.where(self.trial_result == my_type)[0]
@@ -322,6 +353,8 @@ class lab_data:
                     trial_info['trial_target_center_y'] = self.trial_target_center_y[each]
                 if hasattr(self, 'trial_gadget_number'):
                     trial_info['trial_gadget_number'] = self.trial_gadget_number[each]
+                if hasattr(self, 'trial_movement_onset_time'):
+                    trial_info['trial_movement_onset_time'] = self.trial_movement_onset_time[each]
                 trial_info_list.append(trial_info)
         return trial_info_list         
     

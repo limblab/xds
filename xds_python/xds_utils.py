@@ -287,6 +287,12 @@ def delete_paired_bad_channel(EMG_names_single, bad_EMG):
     return bad_paired_channel, bad_EMG_post
 
 def find_force_onset(force_list, ch, thr = 0.4):
+    """
+    This function is designed to find out the force onset time for each trial
+    force_list: a list of force signals, each element corresponds to a trial
+    ch: the number used to specify which force channel to use, typically 0 or 1, for Fx or Fy
+    thr: the threshold to determine whether the force is on
+    """
     onset_num = []
     for each in force_list:
         f = each[:, ch]#np.sqrt(each[:, 0]**2 + each[:, 1]**2)
@@ -298,7 +304,41 @@ def find_force_onset(force_list, ch, thr = 0.4):
             onset_num.append(temp[0])
     return onset_num                 
 
-
+def find_movement_onset(var_list, ch, thr):
+    """
+    The design of this function is the same as the function above, but not just for force signals
+    the var_list is supposed to be a list containing movement trajectories, or velocities
+    """
+    onset_num = []
+    for each in var_list:
+        f = each[:, ch]#np.sqrt(each[:, 0]**2 + each[:, 1]**2)
+        df = np.diff(f)
+        temp = np.where(df >= thr*np.max(df))[0]              
+        if len(temp) == 0:
+            onset_num.append(0)
+        else:
+            onset_num.append(temp[0])
+    return onset_num                 
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
 
 
