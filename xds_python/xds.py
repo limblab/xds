@@ -309,10 +309,10 @@ class lab_data:
                 t2 = time_end[n] + time_after_end
                 if t2 > t1:
                     if raw_flag == 0:
-                        idx = np.where( (self.time_frame > t1) & (self.time_frame < t2) )[0]
+                        idx = np.where( (self.time_frame > t1) & (self.time_frame <= t2) )[0]
                     else:
                         if hasattr(self, 'raw_EMG_time_frame'):
-                            idx = np.where( (self.raw_EMG_time_frame > t1) & (self.raw_EMG_time_frame < t2) )[0]
+                            idx = np.where( (self.raw_EMG_time_frame > t1) & (self.raw_EMG_time_frame <= t2) )[0]
                         else:
                             #print('There is no raw EMG in this file, but the raw_flag is 1 here, please check')
                             idx = []

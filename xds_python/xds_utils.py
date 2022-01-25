@@ -295,7 +295,7 @@ def find_force_onset(force_list, ch, thr = 0.4):
     """
     onset_num = []
     for each in force_list:
-        f = each[:, ch]#np.sqrt(each[:, 0]**2 + each[:, 1]**2)
+        f = np.sqrt(each[:, 0]**2 + each[:, 1]**2)
         df = np.diff(f)
         temp = np.where(df >= thr*np.max(df))[0]              
         if len(temp) == 0:
