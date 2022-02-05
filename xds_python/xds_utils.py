@@ -311,7 +311,7 @@ def find_movement_onset(var_list, ch, thr):
     """
     onset_num = []
     for each in var_list:
-        f = each[:, ch]#np.sqrt(each[:, 0]**2 + each[:, 1]**2)
+        f = np.sqrt(each[:, 0]**2 + each[:, 1]**2)
         df = np.diff(f)
         temp = np.where(df >= thr*np.max(df))[0]              
         if len(temp) == 0:
