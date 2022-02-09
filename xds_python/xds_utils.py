@@ -320,13 +320,35 @@ def find_movement_onset(var_list, ch, thr):
             onset_num.append(temp[0])
     return onset_num                 
     
-    
-    
-    
-    
-    
-    
-    
+def find_target_dir(trial_curs_p, target_list = [-135, -90, -45, 0, 45, 90, 135, 180]):
+    """
+    This function is used to find out the directions of trials, because sometimes they are wrong in origninal recordings
+    curs_p: a list containing the cursor trajectories for each trial
+    """    
+    dirs = []
+    for each in trial_curs_p:
+        s = each[-1, :] - each[0, :]
+        x, y = s[0], s[1]
+        if (x>0)&(y==0):
+            dirs.append(0)
+        elif (x<0)&(y==0):
+            dirs.append(180)
+        elif (x==0)&(y>0):
+            dirs.append(90)
+        elif (x==0)&(y<0):
+            dirs.append(-90)
+        elif (x>0)&(y!=0):
+            dirs.append(np.arctan(y/x)*180/np.pi)  
+        elif (x<0)&(y!=0):
+            dirs.append(np.arctan(y/x)*180/np.pi+y/abs(y)*180)
+    dirs_ = []
+    for each in dirs:
+        if each<=-157.5:
+            dirs_.append(180)
+        else:
+            idx = np.argmin(abs(target_list - each))
+            dirs_.append(target_list[idx])
+    return np.array(dirs_)
     
     
     

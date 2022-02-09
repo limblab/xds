@@ -10,6 +10,7 @@ from collections import defaultdict
 from xds_utils import parse_h5py, parse_scipy
 from xds_utils import get_char_pos, get_paired_EMG_index, find_bad_EMG_index_from_list, delete_paired_bad_channel
 from xds_utils import find_force_onset, find_movement_onset
+from xds_utils import find_target_dir
 
 if sys.version[0] == '2':
     import cPickle as pickle
@@ -242,7 +243,7 @@ class lab_data:
         Parameters
         ----------
         my_type : A char in uppercase
-            Specifying the type of the trial, 'R' for successful trials, 'F' for failed trials
+            Specifying the type of the trial, 'R' for successful trials, 'F' for failed trials, 'ALL' for all trials.
         start_event : A string
             Specifying the start event for each trial, including 'start_time', 'gocue_time' and 'end_time'.
         time_before_start : float
@@ -294,8 +295,11 @@ class lab_data:
             except Exception:
                 print('Compute movement onset time first')
         
-        # Get the indices of a specific type of trials, 'R' or 'F'
-        type_trial = np.where(self.trial_result == my_type)[0]
+        if (my_type == 'R')|(my_type == 'F'):
+            # Get the indices of a specific type of trials, 'R' or 'F'
+            type_trial = np.where(self.trial_result == my_type)[0]
+        elif my_type == 'ALL':
+            type_trial = np.arange( len(self.trial_result) )
         # If gadget number is something, not -1, then do this:
         if gadget_number != -1:
             # The number of trials with a specific gadget number
@@ -324,7 +328,10 @@ class lab_data:
     
     def get_trial_info(self, my_type = 'R', gadget_number = -1):
         trial_info_list = []
-        type_trial = np.where(self.trial_result == my_type)[0]
+        if (my_type == 'R')|(my_type == 'F'):
+            type_trial = np.where(self.trial_result == my_type)[0]
+        elif my_type == 'ALL':
+            type_trial = np.arange( len(self.trial_result) )
         if gadget_number != -1:
             # The number of trials with a specific gadget number
             gadget_trial = np.where(self.trial_gadget_number == gadget_number)[0]
@@ -454,6 +461,19 @@ class lab_data:
                 temp.append(s)
             trial_spike.append(temp)
         return trial_spike
+    
+    def update_target_dir(self):
+        """
+        In some files the directions for the reaching targets are wrong. To get the right target directions
+        the cursor trajectories are needed.
+        By calling this function the target directions will be updated for all trials.
+        """
+        if hasattr(self, 'curs_p'):
+            trial_curs_p = self.get_trials_data_cursor('ALL', 'gocue_time', 0, 'end_time', 0)[0]
+        elif hasattr(self, 'kin_p'):
+            trial_curs_p = self.get_trials_data_kin('ALL', 'gocue_time', 0, 'end_time', 0)[0]
+        new_dir = find_target_dir(trial_curs_p, [-135, -90, -45, 0, 45, 90, 135, 180])     
+        self.trial_target_dir = new_dir
     
     def update_bin_data(self, new_bin_size, update = 1):
         if hasattr(self, 'has_cursor'):
