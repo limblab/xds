@@ -5,6 +5,7 @@ if isfield(xds, 'has_cursor')
 elseif isfield(xds, 'has_kin')
     flag_cursor = xds.has_kin;
 end
+flag_cursor = 1;
 
 [t_spike, spike_counts] = bin_spikes(xds, new_bin_size);
 if xds.has_EMG
@@ -38,14 +39,15 @@ if xds.has_force
     xds.force = force;
 end
 if flag_cursor
-    if isprop(xds, 'has_cursor')
-        xds.curs_p = curs_p;
-        xds.curs_v = curs_v;
-        xds.curs_a = curs_a;
-    elseif isprop(xds, 'has_kin')
+    if isfield(xds, 'has_kin')
         xds.kin_p = curs_p;
         xds.kin_v = curs_v;
         xds.kin_a = curs_a;
+    elseif isfield(xds, 'has_cursor')
+        xds.curs_p = curs_p;
+        xds.curs_v = curs_v;
+        xds.curs_a = curs_a;
+
     end
 
 end
