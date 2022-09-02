@@ -4,19 +4,26 @@ import scipy.io as sio
 from collections import defaultdict
 import copy
 
-def parse_h5py(path, file_name):
+def parse_h5py(base_path, file_name):
     def arr_to_str(b):
-        return ''.join([chr(each) for each in b])
+        if isinstance(b, list) == 0:
+            return ''.join([chr(int(each)) for each in b])
+        else:
+            b_ = []
+            for each in b:
+                b_.append(''.join([chr(int(c)) for c in each]))
+            return b_
     
     def parse_meta(raw_meta):
         meta = {}
-        meta['ranBy'] = ''.join([chr(each) for each in np.asarray(raw_meta['ranBy'])])
-        meta['monkey'] = ''.join([chr(each) for each in np.asarray(raw_meta['monkey'])])
-        meta['array'] = ''.join([chr(each) for each in np.asarray(raw_meta['array'])])
-        meta['dateTime'] = ''.join([chr(each) for each in np.asarray(raw_meta['dateTime'])])
-        meta['processedTime'] = ''.join([chr(each) for each in np.asarray(raw_meta['processedTime'])])
-        meta['rawFileName'] = ''.join([chr(each) for each in np.asarray(raw_meta['rawFileName'])])
-        meta['task'] = ''.join([chr(each) for each in np.asarray(raw_meta['task'])])
+        meta['ranBy'] = ''.join([chr(int(each)) for each in np.asarray(raw_meta['ranBy'])])
+        meta['monkey'] = ''.join([chr(int(each)) for each in np.asarray(raw_meta['monkey'])])
+        meta['hand'] = ''.join([chr(int(each)) for each in np.asarray(raw_meta['hand'])])
+        meta['array'] = ''.join([chr(int(each)) for each in np.asarray(raw_meta['array'])])
+        meta['dateTime'] = ''.join([chr(int(each)) for each in np.asarray(raw_meta['dateTime'])])
+        meta['processedTime'] = ''.join([chr(int(each)) for each in np.asarray(raw_meta['processedTime'])])
+        meta['rawFileName'] = ''.join([chr(int(each)) for each in np.asarray(raw_meta['rawFileName'])])
+        meta['task'] = ''.join([chr(int(each)) for each in np.asarray(raw_meta['task'])])
         meta['duration'] = np.asarray(raw_meta['duration'])[0][0]
         meta['lab'] = np.asarray(raw_meta['lab'])[0][0]
         meta['numTrials'] = np.asarray(raw_meta['numTrials'])[0][0]
@@ -27,9 +34,9 @@ def parse_h5py(path, file_name):
         return meta
         
     parsed = {}
-    if path[-1] != '/':
-        path = path + '/'
-    read_data = h5py.File(path + file_name, 'r')
+    if base_path[-1] != '/':
+        base_path = base_path + '/'
+    read_data = h5py.File(base_path + file_name, 'r')
     xds = read_data['xds']
     
     parsed['has_EMG'] = np.asarray(xds['has_EMG'])[0][0]
@@ -38,6 +45,10 @@ def parse_h5py(path, file_name):
     parsed['has_cursor'] = np.asarray(xds['has_kin'])[0][0]
     parsed['sorted'] = np.asarray(xds['sorted'])[0][0]
     parsed['bin_width'] = np.asarray(xds['bin_width'])[0][0]
+    try:
+        parsed['has_trials'] = np.asarray(xds['has_trials'])[0][0]
+    except Exception:
+        parsed['has_trials'] = 1
     try:
         parsed['has_raw_EMG'] = np.asarray(xds['has_raw_EMG'])[0][0]
     except Exception:
@@ -55,6 +66,8 @@ def parse_h5py(path, file_name):
     
     if 'spike_waveforms' in xds.keys():
         parsed['spike_waveforms'] = [read_data[xds['spike_waveforms'][i][0]][()].T for i in range(len(xds['spike_waveforms']))]
+    if 'nonlin_waveforms' in xds.keys():
+        parsed['nonlin_waveforms'] = [read_data[xds['nonlin_waveforms'][i][0]][()].T for i in range(len(xds['nonlin_waveforms']))]
     if 'EMG' in xds.keys():
         parsed['EMG'] = np.asarray(xds['EMG']).T
         temp = [read_data[xds['EMG_names'][i][0]][()] for i in range( len(xds['EMG_names']) )]
@@ -62,6 +75,12 @@ def parse_h5py(path, file_name):
     if 'raw_EMG' in xds.keys():
         parsed['raw_EMG'] = np.asarray(xds['raw_EMG']).T
         parsed['raw_EMG_time_frame'] = np.asarray(xds['raw_EMG_time_frame']).reshape((-1, ))
+    if 'joint_names' in xds.keys():
+        temp = [read_data[xds['joint_names'][i][0]][()] for i in range( len(xds['joint_names']) )]
+        parsed['joint_names'] = [arr_to_str(each) for each in temp]
+        parsed['joint_angles'] = np.asarray(xds['joint_angles']).T
+        parsed['joint_angle_time_frame'] = np.asarray(xds['joint_angle_time_frame']).reshape((-1, ))
+
     if 'force' in xds.keys():
         parsed['force'] = np.asarray(xds['force']).T
     if 'raw_force' in xds.keys():
@@ -83,47 +102,49 @@ def parse_h5py(path, file_name):
                     parsed['has_cursor'] = 1
     
     # -------- handling trial timing related variables -------- #
-    parsed['trial_start_time'] = np.asarray(xds['trial_start_time']).reshape((-1, ))
-    parsed['trial_end_time'] = np.asarray(xds['trial_end_time']).reshape((-1, ))
+    if parsed['has_trials'] == 1:
+        parsed['trial_start_time'] = np.asarray(xds['trial_start_time']).reshape((-1, ))
+        parsed['trial_end_time'] = np.asarray(xds['trial_end_time']).reshape((-1, ))
     # -------- gocue_time may have different format from different tasks -------- #
-    if xds['trial_gocue_time'].shape[0] == 1:
-        parsed['trial_gocue_time'] = np.asarray(xds['trial_gocue_time']).reshape((-1, ))
-    elif xds['trial_gocue_time'].shape[0] > 1:
-        parsed['trial_gocue_time'] = np.asarray(xds['trial_gocue_time']).T
-    else:
-        print('something wrong with the gocue time')
+        if xds['trial_gocue_time'].shape[0] == 1:
+            parsed['trial_gocue_time'] = np.asarray(xds['trial_gocue_time']).reshape((-1, ))
+        elif xds['trial_gocue_time'].shape[0] > 1:
+            parsed['trial_gocue_time'] = np.asarray(xds['trial_gocue_time']).T
+        else:
+            print('something wrong with the gocue time')
     # -------- handling target related variables -------- #
-    parsed['trial_target_dir'] = np.asarray(xds['trial_target_dir']).reshape((-1, ))
-    parsed['trial_target_corners'] = np.asarray(xds['trial_target_corners']).T
-    parsed['trial_result'] = np.asarray([chr(each) for each in np.asarray(xds['trial_result']).reshape((-1, ))])
+        parsed['trial_target_dir'] = np.asarray(xds['trial_target_dir']).reshape((-1, ))
+        parsed['trial_target_corners'] = np.asarray(xds['trial_target_corners']).T
+        parsed['trial_result'] = np.asarray([chr(each) for each in np.asarray(xds['trial_result']).reshape((-1, ))])
     
-    temp = [read_data[xds['trial_info_table_header'][0][i]][()] for i in range( xds['trial_info_table_header'].shape[1] )]
-    parsed['trial_info_table_header'] = [arr_to_str(each) for each in temp]
-    
-    r, c = xds['trial_info_table'].shape
-    trial_info_table = []
-    for i in range(r):
-        temp = []
-        for j in range(c):
-            temp.append(read_data[xds['trial_info_table'][i][j]][()])
-        trial_info_table.append(temp)
-    parsed['trial_info_table'] = trial_info_table
+        temp = [read_data[xds['trial_info_table_header'][0][i]][()] for i in range( xds['trial_info_table_header'].shape[1] )]
+        parsed['trial_info_table_header'] = [arr_to_str(each) for each in temp]
+        
+        r, c = xds['trial_info_table'].shape
+        trial_info_table = []
+        for i in range(r):
+            temp = []
+            for j in range(c):
+                temp.append(read_data[xds['trial_info_table'][i][j]][()])
+            trial_info_table.append(temp)
+        parsed['trial_info_table'] = trial_info_table
     
     parsed['meta'] = parse_meta(xds['meta'])
     
     read_data.close()
     return parsed
 
-def parse_scipy(path, file_name):
+def parse_scipy(base_path, file_name):
     parsed = {}
-    if path[-1] != '/':
-        path = path + '/'
-    read_data = sio.loadmat(path + file_name)
+    if base_path[-1] != '/':
+        base_path = base_path + '/'
+    read_data = sio.loadmat(base_path + file_name)
     xds = read_data['xds']
     
     # -------- meta information -------- #
     parsed['meta'] = {}
     parsed['meta']['monkey'] = xds['meta'][0][0]['monkey'][0][0][0]
+    #parsed['meta']['hand'] = xds['meta'][0][0]['hand'][0][0][0]
     parsed['meta']['task'] = xds['meta'][0][0]['task'][0][0][0]
     parsed['meta']['duration'] = xds['meta'][0][0]['duration'][0][0][0][0]
     parsed['meta']['dateTime'] = xds['meta'][0][0]['dateTime'][0][0][0]
@@ -164,6 +185,10 @@ def parse_scipy(path, file_name):
     except Exception:
         pass
     try:
+        parsed['nonlin_waveforms'] = xds['nonlin_waveforms'][0][0][0].tolist()
+    except Exception:
+        pass
+    try:
         parsed['EMG'] = xds['EMG'][0][0]
         parsed['EMG_names'] = [each.tolist()[0] for each in xds['EMG_names'][0][0][0]]
     except Exception:
@@ -192,6 +217,12 @@ def parse_scipy(path, file_name):
     try:
         parsed['raw_EMG'] = xds['raw_EMG'][0][0]
         parsed['raw_EMG_time_frame'] = xds['raw_EMG_time_frame'][0][0]
+    except Exception:
+        pass
+    try:
+        parsed['joint_names'] = [each.tolist()[0] for each in xds['joint_names'][0][0][0]]
+        parsed['joint_angles'] = xds['joint_angles'][0][0]
+        parsed['joint_angle_time_frame'] = xds['joint_angle_time_frame'][0][0]
     except Exception:
         pass
     try:

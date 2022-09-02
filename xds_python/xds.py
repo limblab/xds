@@ -37,6 +37,7 @@ class lab_data:
         # -------- meta -------- #
         self.__meta = {}
         self.__meta['monkey_name'] = parsed['meta']['monkey']
+        self.__meta['hand'] = parsed['meta']['hand']
         self.__meta['task_name'] = parsed['meta']['task']
         self.__meta['duration'] = parsed['meta']['duration']
         self.__meta['collect_date'] = parsed['meta']['dateTime']
@@ -48,34 +49,45 @@ class lab_data:
         self.bin_width = parsed['bin_width']
         self.has_EMG = parsed['has_EMG']
         self.has_kin = parsed['has_kin']
+        self.has_trials = parsed['has_trials']
+        self.has_force = parsed['has_force']
         if 'has_cursor' in parsed.keys():
             self.has_cursor = parsed['has_cursor']
-        self.has_force = parsed['has_force']
         if 'has_raw_force' in parsed.keys():
             self.has_raw_force = parsed['has_raw_force']
         if 'has_raw_EMG' in parsed.keys():
             self.has_raw_EMG = parsed['has_raw_EMG']
         # -------- trial information -------- #
-        self.trial_target_corners = parsed['trial_target_corners']
-        self.trial_target_dir = parsed['trial_target_dir'] 
-        self.trial_result = parsed['trial_result']
-        self.trial_start_time = parsed['trial_start_time']
-        self.trial_end_time = parsed['trial_end_time']
-        self.trial_gocue_time = parsed['trial_gocue_time']
-        self.trial_info_table_header = parsed['trial_info_table_header']
-        self.trial_info_table = parsed['trial_info_table']
+        if self.has_trials == 1:
+            self.trial_target_corners = parsed['trial_target_corners']
+            self.trial_target_dir = parsed['trial_target_dir']
+            self.trial_result = parsed['trial_result']
+            self.trial_start_time = parsed['trial_start_time']
+            self.trial_end_time = parsed['trial_end_time']
+            self.trial_gocue_time = parsed['trial_gocue_time']
+            self.trial_info_table_header = parsed['trial_info_table_header']
+            self.trial_info_table = parsed['trial_info_table']
         # -------- data -------- #
         self.spike_counts = parsed['spike_counts']
         self.spikes = parsed['spikes']
         self.unit_names = parsed['unit_names']
         if 'spike_waveforms' in parsed.keys():
             self.spike_waveforms = parsed['spike_waveforms']
+        if 'nonlin_waveforms' in parsed.keys():
+            self.nonlin_waveforms = parsed['nonlin_waveforms']
         if 'EMG' in parsed.keys():
             self.EMG = parsed['EMG']
             self.EMG_names = parsed['EMG_names']
         if 'raw_EMG' in parsed.keys():
             self.raw_EMG = parsed['raw_EMG']
             self.raw_EMG_time_frame = parsed['raw_EMG_time_frame']
+        if self.has_kin == 1:
+            try:
+                self.joint_names = parsed['joint_names']
+                self.joint_angle_time_frame = parsed['joint_angle_time_frame']
+                self.joint_angles = parsed['joint_angles']
+            except Exception:
+                pass
         if 'force' in parsed.keys():
             self.force = parsed['force']
         if 'raw_force' in parsed.keys():
@@ -100,19 +112,20 @@ class lab_data:
             self.n_force = 0
             
         # -------- get rid of trials with nan timings -------- #
-        self.clean_up_trials()
+        if self.has_trials == 1:
+            self.clean_up_trials()
         
-        # -------- find out the target centers -------- #
-        try:
-            idx = self.trial_info_table_header.index('tgtCtr')
-        except Exception:
+            # -------- find out the target centers -------- #
             try:
-                idx = self.trial_info_table_header.index('tgtCenter')
+                idx = self.trial_info_table_header.index('tgtCtr')
             except Exception:
-                print('Check the trial info table header')
-        target_center = np.asarray(self.trial_info_table[idx]).squeeze()
-        self.trial_target_center_x = target_center[:, 0]
-        self.trial_target_center_y = target_center[:, 1]
+                try:
+                    idx = self.trial_info_table_header.index('tgtCenter')
+                except Exception:
+                    print('Check the trial info table header')
+            target_center = np.asarray(self.trial_info_table[idx]).squeeze()
+            self.trial_target_center_x = target_center[:, 0]
+            self.trial_target_center_y = target_center[:, 1]
         
         # -------- for multigadget files with more than 1 gadget activated, find out the gadget number --------- #
         if '_MG_' in self.file_name:
@@ -175,6 +188,7 @@ class lab_data:
         None.
 
         """
+        
         trial_gocue_time = self.trial_gocue_time
         trial_start_time = self.trial_start_time
         trial_end_time = self.trial_end_time
@@ -602,7 +616,7 @@ class lab_data:
             temp1 = np.convolve(kernel,each)
             temp2 = temp1[int(kernel_hl):n_sample + int(kernel_hl)]/nm
             smoothed.append(temp2)
-        #print('The spike counts have been smoothed.')
+        print('The spike counts have been smoothed.')
         self.spike_counts = np.asarray(smoothed).T
 
     def sort_trials_target_dir(self, data_type, target_dir_list, trial_type, time_params, EMG_channels = 'all'):
