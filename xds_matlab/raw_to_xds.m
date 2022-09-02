@@ -101,9 +101,9 @@ if ex.meta.hasForce == true
    ex.binConfig.include(field_ind).field = 'force';
 end
 
-% if ex.meta.hasLfp == true
-%    ex.binConfig.include(field_ind).field = 'lfp';
-% end
+%if ex.meta.hasLfp == true
+%   ex.binConfig.include(field_ind).field = 'lfp';
+%end
 
 %^The above block of text is sometimes necessary if you're converting files
 %from monkeys that have multiple implants. Such a file can have only
