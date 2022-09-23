@@ -1,6 +1,8 @@
-function [trial_spike_counts, trial_EMG, trial_force, trial_kin] = get_rewarded_trials(xds)
-suc_timetable = get_trial_time_table(xds, 'R');
+function [trial_spike_counts, trial_EMG, trial_force, trial_kin, trial_tgt_pos] = get_rewarded_trials(xds,start_time)
+suc_timetable = get_trial_time_table(xds, 'R', start_time);
 j = 1;
+trial_tgt_pos = [];
+trial_tgt_pos_succ = xds.trial_target_dir(xds.trial_result == 'R');
 for i = 1:length(suc_timetable)
     if suc_timetable(i,2) - suc_timetable(i,1)<0.5
         continue;
@@ -27,6 +29,7 @@ for i = 1:length(suc_timetable)
     else
        trial_kin = 0;
     end
+    trial_tgt_pos = [trial_tgt_pos; trial_tgt_pos_succ(i)];
     j = j+1;
 end
 
