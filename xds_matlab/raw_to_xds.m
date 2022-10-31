@@ -31,8 +31,6 @@ function xds = raw_to_xds(file_dir, file_name, map_dir, map_name, params)
 % xds                   The XDS file structure
 %
 
-
-
 data_file = strcat(file_dir, file_name);
 map_file = strcat(map_dir, map_name);
 monkey_name = params.monkey_name;
@@ -120,6 +118,9 @@ xds.has_EMG = xds.meta.hasEmg;
 xds.has_force = xds.meta.hasForce;
 xds.has_kin = xds.meta.hasKinematics;
 xds.sorted = sorted;
+if any(contains(cds.analog{1,1}.Properties.VariableNames, 'video_sync'))
+    xds.video_sync = cds.analog{1,1};
+end
 
 % units
 % In some data files (like those collected on Monkey Chewie in 2015) there
@@ -241,16 +242,63 @@ if ex.meta.hasKinematics == true
    xds.curs_a(:, 2) = ex.bin.data{:, ayMask};
 end   
 
-% trial information
-xds.trial_info_table_header = fieldnames(cds.trials);
-xds.trial_info_table = table2cell(cds.trials);
+% Trial information
+if ~strcmp(params.task_name, 'FR')
+    xds.has_trials = true;
+    xds.trial_info_table_header = fieldnames(cds.trials);
+    xds.trial_info_table = table2cell(cds.trials);
+    
+    xds.trial_gocue_time = deal_trial_info('goCue', cds);
+    xds.trial_start_time = deal_trial_info('startTime', cds);
+    xds.trial_end_time = deal_trial_info('endTime', cds);
+    xds.trial_result = deal_trial_info('result', cds);
+    xds.trial_target_dir = deal_trial_info('tgtDir', cds);
+    xds.trial_target_corners = deal_trial_info('Corners', cds);
+else % Add the mot file if the task is FR
+    xds.has_trials = false;
+    try
+        xds.has_kin = true;
+        [joint_angle_time_frame, joint_angles, joint_names] = mot_2_xds(cds.analog{1,1}, file_dir, file_name);
+        
+        % Align the neural, kinematic, & EMG data
+        sync_idxs = find(xds.time_frame < joint_angle_time_frame(1));
+        % Trim the EMG
+        xds.EMG(sync_idxs, :) = [];
+        % Trim the spike counts
+        xds.spike_counts(sync_idxs, :) = [];
+        for ii = 1:length(xds.spikes)
+            % Find the spikes
+            spike_idxs = xds.spikes{ii} < joint_angle_time_frame(1);
+            % Adjust the threshold crossing time
+            xds.spikes{ii} = xds.spikes{ii} - joint_angle_time_frame(1);
+            % Trim the spikes
+            xds.spikes{ii}(spike_idxs) = [];
+            % Trim the spike waveforms
+            xds.spike_waveforms{ii}(spike_idxs, :) = [];
+        end
+        % Adjust the neural time
+        xds.time_frame(end - length(sync_idxs) + 1:end) = [];
+        sync_idxs = find(xds.raw_EMG_time_frame < joint_angle_time_frame(1));
+        % Trim the EMG
+        xds.raw_EMG(sync_idxs, :) = [];
+        % Adjust the raw EMG time
+        xds.raw_EMG_time_frame(end - length(sync_idxs) + 1:end) = [];
 
-xds.trial_gocue_time = deal_trial_info('goCue', cds);
-xds.trial_start_time = deal_trial_info('startTime', cds);
-xds.trial_end_time = deal_trial_info('endTime', cds);
-xds.trial_result = deal_trial_info('result', cds);
-xds.trial_target_dir = deal_trial_info('tgtDir', cds);
-xds.trial_target_corners = deal_trial_info('Corners', cds);
+        % Remove excesses in the joint angles
+        excess_joint_idxs = find(joint_angle_time_frame >= xds.time_frame(end));
+        joint_angle_time_frame(excess_joint_idxs) = [];
+        joint_angles(excess_joint_idxs, :) = [];
+        % Adjust the joint angle time
+        joint_angle_time_frame = joint_angle_time_frame - joint_angle_time_frame(1);
+        
+        % Add the kinematic data to xds
+        xds.joint_angle_time_frame = joint_angle_time_frame;
+        xds.joint_angles = joint_angles;
+        xds.joint_names = joint_names;
+    catch
+        xds.has_kin = false;
+    end
+end
 
 clear cds
 clear ex
