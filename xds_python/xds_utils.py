@@ -18,7 +18,10 @@ def parse_h5py(base_path, file_name):
         meta = {}
         meta['ranBy'] = ''.join([chr(int(each)) for each in np.asarray(raw_meta['ranBy'])])
         meta['monkey'] = ''.join([chr(int(each)) for each in np.asarray(raw_meta['monkey'])])
-        meta['hand'] = ''.join([chr(int(each)) for each in np.asarray(raw_meta['hand'])])
+        try:
+            meta['hand'] = ''.join([chr(int(each)) for each in np.asarray(raw_meta['hand'])])
+        except Exception:
+            pass
         meta['array'] = ''.join([chr(int(each)) for each in np.asarray(raw_meta['array'])])
         meta['dateTime'] = ''.join([chr(int(each)) for each in np.asarray(raw_meta['dateTime'])])
         meta['processedTime'] = ''.join([chr(int(each)) for each in np.asarray(raw_meta['processedTime'])])

@@ -279,7 +279,7 @@ else % Add the mot file if the task is FR
         % Adjust the neural time
         xds.time_frame(end - length(sync_idxs) + 1:end) = [];
         sync_idxs = find(xds.raw_EMG_time_frame < joint_angle_time_frame(1));
-        % Trim the EMG
+        % Trim the raw EMG
         xds.raw_EMG(sync_idxs, :) = [];
         % Adjust the raw EMG time
         xds.raw_EMG_time_frame(end - length(sync_idxs) + 1:end) = [];

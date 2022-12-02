@@ -37,7 +37,8 @@ class lab_data:
         # -------- meta -------- #
         self.__meta = {}
         self.__meta['monkey_name'] = parsed['meta']['monkey']
-        self.__meta['hand'] = parsed['meta']['hand']
+        if 'hand' in parsed['meta']:
+            self.__meta['hand'] = parsed['meta']['hand']
         self.__meta['task_name'] = parsed['meta']['task']
         self.__meta['duration'] = parsed['meta']['duration']
         self.__meta['collect_date'] = parsed['meta']['dateTime']
