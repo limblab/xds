@@ -9,7 +9,7 @@ j = 1;
 
 % Trial target positions
 trial_tgt_pos = [];
-trial_tgt_pos_succ = xds.trial_target_dir(xds.trial_result == 'R');
+% trial_tgt_pos_succ = xds.trial_target_dir(xds.trial_result == 'R');
 trial_tgt_dir_succ = xds.trial_target_dir(xds.trial_result == 'R');
 
 % I think we should be able to change this into just logical indexing.
