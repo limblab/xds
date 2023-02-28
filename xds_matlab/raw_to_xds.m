@@ -59,7 +59,7 @@ end
 cds=commonDataStructure();
 cds.file2cds(data_file,['array', array_name],...
             ['monkey', monkey_name],lab,'ignoreJumps',['task', task_name], ...
-            ['ranBy', ran_by], ['mapFile', map_file]);
+            ['ranBy', ran_by], ['mapFile', map_file], ['sorted', num2str(sorted)]);
 
 bin_width = params.bin_width;
 ex = experiment; 
@@ -118,7 +118,7 @@ xds.has_EMG = xds.meta.hasEmg;
 xds.has_force = xds.meta.hasForce;
 xds.has_kin = xds.meta.hasKinematics;
 xds.sorted = sorted;
-if any(contains(cds.analog{1,1}.Properties.VariableNames, 'video_sync'))
+if strcmp(task_name, 'FR') && any(contains(cds.analog{1,1}.Properties.VariableNames, 'video_sync'))
     xds.video_sync = cds.analog{1,1};
 end
 
@@ -130,7 +130,7 @@ end
 % 'elec', then the corresponding channel is neural data, and will be
 % registered in 'elec_mask'
 % Find out invalid channels based on ID number
-invalid_id = find([cds.units(:).ID] == 255);
+invalid_id = [cds.units(:).ID] == 255;
 % Get rid of the invalid channels in the cds.unit table and get a copy
 temp_table = cds.units;
 temp_table(invalid_id) = [];
@@ -165,7 +165,7 @@ elseif sorted == 1
     good_id = find(elec_mask == 1);
     k = 1;
     for i = 1:length(good_id)
-        if (temp_table(i).ID ~= 0)&(temp_table(i).ID ~= 255)
+        if (temp_table(i).ID ~= 0) && (temp_table(i).ID ~= 255)
             xds.unit_names{1, k} = strcat(temp_table(good_id(i)).label,...
                 strcat('_', char(string(temp_table(i).ID))) );
             xds.spikes{1, k} = temp_table(good_id(i)).spikes.ts;
@@ -192,7 +192,7 @@ end
 
 xds.spike_counts = ex.bin.data{:,binnedUnitMask}*bin_width;
 if ex.meta.hasEmg == true
-   emgMask = ~cellfun(@(x)isempty(strfind(x,'EMG')),ex.bin.data.Properties.VariableNames);
+   emgMask = ~cellfun(@(x)~contains(x,'EMG'),ex.bin.data.Properties.VariableNames);
    emgNames = ex.bin.data.Properties.VariableNames(emgMask);
    xds.EMG = ex.bin.data{:,emgMask};
    xds.EMG_names = emgNames;
@@ -206,8 +206,8 @@ if ex.meta.hasEmg == true
    end
 end
 if ex.meta.hasForce == true
-   fxMask = ~cellfun(@(x)isempty(strfind(x,'fx')),ex.bin.data.Properties.VariableNames);
-   fyMask = ~cellfun(@(x)isempty(strfind(x,'fy')),ex.bin.data.Properties.VariableNames);
+   fxMask = ~cellfun(@(x)~contains(x,'fx'),ex.bin.data.Properties.VariableNames);
+   fyMask = ~cellfun(@(x)~contains(x,'fy'),ex.bin.data.Properties.VariableNames);
    xds.force(:, 1) = ex.bin.data{:,fxMask};
    xds.force(:, 2) = ex.bin.data{:,fyMask};
    if requires_raw_force
@@ -220,8 +220,8 @@ if ex.meta.hasForce == true
    end
 end
 if ex.meta.hasKinematics == true
-   xMask = ~cellfun(@(x)isempty(strfind(x,'x')),ex.bin.data.Properties.VariableNames);
-   yMask = ~cellfun(@(x)isempty(strfind(x,'y')),ex.bin.data.Properties.VariableNames);
+   xMask = ~cellfun(@(x)~contains(x,'x'),ex.bin.data.Properties.VariableNames);
+   yMask = ~cellfun(@(x)~contains(x,'y'),ex.bin.data.Properties.VariableNames);
    temp = find(xMask==1);
    for i = 2:length(temp)
        xMask(temp(i)) = 0; 
@@ -230,10 +230,10 @@ if ex.meta.hasKinematics == true
    for i = 2:length(temp)
        yMask(temp(i)) = 0; 
    end
-   vxMask = ~cellfun(@(x)isempty(strfind(x,'vx')),ex.bin.data.Properties.VariableNames);
-   vyMask = ~cellfun(@(x)isempty(strfind(x,'vy')),ex.bin.data.Properties.VariableNames);
-   axMask = ~cellfun(@(x)isempty(strfind(x,'ax')),ex.bin.data.Properties.VariableNames);
-   ayMask = ~cellfun(@(x)isempty(strfind(x,'ay')),ex.bin.data.Properties.VariableNames);
+   vxMask = ~cellfun(@(x)~contains(x,'vx'),ex.bin.data.Properties.VariableNames);
+   vyMask = ~cellfun(@(x)~contains(x,'vy'),ex.bin.data.Properties.VariableNames);
+   axMask = ~cellfun(@(x)~contains(x,'ax'),ex.bin.data.Properties.VariableNames);
+   ayMask = ~cellfun(@(x)~contains(x,'ay'),ex.bin.data.Properties.VariableNames);
    xds.curs_p(:, 1) = ex.bin.data{:, xMask};
    xds.curs_p(:, 2) = ex.bin.data{:, yMask};
    xds.curs_v(:, 1) = ex.bin.data{:, vxMask};
@@ -243,7 +243,7 @@ if ex.meta.hasKinematics == true
 end   
 
 % Trial information
-if ~strcmp(params.task_name, 'FR')
+if ~strcmp(task_name, 'FR')
     xds.has_trials = true;
     xds.trial_info_table_header = fieldnames(cds.trials);
     xds.trial_info_table = table2cell(cds.trials);
@@ -258,7 +258,7 @@ else % Add the mot file if the task is FR
     xds.has_trials = false;
     try
         xds.has_kin = true;
-        [joint_angle_time_frame, joint_angles, joint_names] = mot_2_xds(cds.analog{1,1}, file_dir, file_name);
+        [joint_angle_time_frame, joint_angles, joint_names] = mot_2_xds(xds.video_sync, file_dir, file_name);
         
         % Align the neural, kinematic, & EMG data
         sync_idxs = find(xds.time_frame < joint_angle_time_frame(1));
@@ -305,7 +305,7 @@ clear ex
 end
 
 function trial_info = deal_trial_info(str,cds)
-trial_mask = ~cellfun(@(x)isempty(strfind(x,str)),cds.trials.Properties.VariableNames);
+trial_mask = ~cellfun(@(x)~contains(x,str),cds.trials.Properties.VariableNames);
 if sum(trial_mask) == 0
     disp('Something is wrong with the trial table');
     trial_info = 0;

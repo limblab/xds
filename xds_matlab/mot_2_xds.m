@@ -3,7 +3,16 @@ function [joint_angle_time_frame, joint_angles, joint_names] = mot_2_xds(video_s
 
 %% Load the .mot file
 
-xds_mot = readtable(strcat(file_dir, file_name, '.mot'), 'Filetype', 'text');
+try
+    xds_mot = readtable(strcat(file_dir, file_name, '.mot'), 'Filetype', 'text');
+catch
+    joint_angle_time_frame = NaN;
+    joint_angles = NaN;
+    joint_names = NaN;
+    disp('No mot file available:')
+    return
+end
+
 disp('Loading mot file:')
 
 mot_var_names = xds_mot.Properties.VariableNames';
