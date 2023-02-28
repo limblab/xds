@@ -15,59 +15,44 @@ The latest updates are in the branch "wireless_EMG", which also supports EMGs co
 * You can write a script as below to load your data, or simply open the file xds_matlab/example_load_single_file.m, and change the params and file destinations.
 
 
-```
-clc
-clear
-params = struct( ...
-    'monkey_name','Pop', ...
-    'array_name','M1', ...
-    'task_name','WM', ...
-    'ran_by','KLB', ...
-    'lab',1, ...
-    'bin_width',0.001, ...
-    'sorted',0, ...
-    'requires_raw_emg',1);
-
-base_dir = 'Z:\data\Pop_18E3\CerebusData\20200311\';
-file_name = 'Pop_20200311_WM_CO_001';
-map_dir = 'Z:\limblab\lab_folder\Animal-Miscellany\Pop_18E3\Array Map Files\Implant_2020_01\6250-002086\';
-map_name = 'SN 6250-002086.cmp';
-save_dir = '.\';
-xds = raw_to_xds(base_dir, file_name, map_dir, map_name, params);
-save_name = strcat(save_dir, file_name);
-save(strcat(save_name, '.mat'),'xds');
-```
-
-## How to create xds files from many .nev and .nsx files?
-
-* Sometimes you may need to convert a series of files to xds format togother. Here, you can start with putting all `.nev` and `.nsx` in one folder.
-
-* Then, you can create a script like this:
  ```
 clc
 clear
-params = struct( ...
-    'monkey_name','Jango', ...
-    'array_name','M1', ...
-    'task_name','WF', ...
-    'ran_by','SN', ...
-    'lab',1, ...
-    'bin_width',0.001,...
-    'sorted',0,...
-    'requires_raw_emg',1);
 
-base_dir = 'Z:\limblab\lab_folder\Projects\darpa\DS18(Jango_2015)\nev\';
-map_dir = 'Z:\limblab\lab_folder\Projects\darpa\array_map_files\Jango_right_M1\';
-map_name = 'SN6250-000945.cmp';
-save_dir = '.\'; 
-open_file = strcat(base_dir, '*.nev');
+Monkey_Hand = 'Left';
+TgtHold = 0.5;
+
+params = struct( ...
+    'monkey_name', 'Pop', ...
+    'array_name', 'M1', ...
+    'task_name', 'multi_gadget', ... % WS, multi_gadget, FR, WB, etc.
+    'ran_by', 'HP', ...
+    'lab', 1, ...
+    'bin_width', 0.001,...
+    'sorted', 1,...
+    'requires_raw_emg', 1,...
+    'save_waveforms', 1);
+
+file_dir = 'C:\Users\rhpow\Documents\Work\Northwestern\Monkey_Data\Pop\20210617\';
+map_dir = 'C:\Users\rhpow\Documents\Work\Northwestern\Monkey_Data\Pop\';
+map_name = 'SN 6250-002339';
+save_dir = 'C:\Users\rhpow\Documents\Work\Northwestern\Monkey_Data\Pop\20210617\';
+open_file = strcat(file_dir, '*.ccf');
 file = dir(open_file);
+
 for ii = 1:length(file)
-    file_name_in_list = file(ii).name(1:end-4);
-    disp(file_name_in_list);
-    xds = raw_to_xds(base_dir, file_name_in_list, map_dir, map_name, params);
-    save_file = strcat(file_name_in_list, '.mat');
-    save(strcat(save_dir, save_file), 'xds');
+    file_name = file(ii).name(1:end-4);
+    disp(file_name);
+    xds = raw_to_xds(file_dir, file_name, map_dir, map_name, params);
+    %[xds] = CalculateNonLinearEnergy(xds);
+    xds.meta.hand = Monkey_Hand;
+    xds.meta.TgtHold = TgtHold;
+    if params.sorted == 1
+        save_file = strcat(file_name, '-s', '.mat');
+    else
+        save_file = strcat(file_name, '.mat');
+    end
+    save(strcat(save_dir, save_file), 'xds', '-v7.3');
     clear xds
 end
 ```
