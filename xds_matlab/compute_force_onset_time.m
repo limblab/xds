@@ -1,25 +1,33 @@
-function idx_onset = compute_force_onset_time(trial_force)
+function time_onset = compute_force_onset_time(xds)
+% The force onset time during all trials, including rewarded, failed and 
+% aborted trials are calculated here
 
-ch = 1;
-thr = 0.4;
-
-idx_onset = zeros(length(trial_force), 1);
-for i = 1:length(trial_force)
-    each = trial_force{i};
-%     f = each(:, ch);
-    f = sqrt(each(:, 1).^2 + each(:, 1).^2);
-    df = diff(f);
-    temp = find(df >= thr*max(df));
-    
-    % Get first index after 250 ms 
-    temp_idx = find(temp>6);
-    
-    if isempty(temp) == 0
-%         idx_onset(i) = temp(1);
-        idx_onset(i) = temp(temp_idx(1));
-    end
+idx = cell(length(xds.trial_start_time), 1);
+for i = 1:length(idx)
+    idx{i} = find((xds.time_frame > xds.trial_start_time(i)) & (xds.time_frame < xds.trial_end_time(i)));
 end
 
+trial_time_frame = cell(length(idx), 1);
+for i = 1:length(idx)
+    trial_time_frame{i} = xds.time_frame(idx{i});
+end
+
+trial_force = cell(length(idx), 1);
+for i = 1:length(idx)
+    trial_force{i} = xds.force(idx{i}, :);
+end
+
+thr = 0.4;
+idx_onset = find_force_onset(trial_force, thr);
+
+time_onset = [];
+for i = 1:length(idx_onset)
+    time_onset = [time_onset trial_time_frame{i}(idx_onset(i))];
+end
+
+time_onset = time_onset';
+
+disp('Force onset time computed')
 
 end
 
