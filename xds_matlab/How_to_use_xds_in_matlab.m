@@ -92,6 +92,20 @@ smoothed_spike_counts = smooth_spike_counts(xds, 0.02, 'sqrt');
 start_time = "start_time";  % select either gocue_time or start_time
 [trial_spike_counts, trial_EMG, trial_force, trial_kin, trial_tgt_pos] = get_rewarded_trials(xds, start_time);
 
+% You can also extract trial information around force_onset_time like this:
+start_event = 'force_onset_time';
+end_event = 'force_onset_time';
+time_before_start = 0.5;
+time_after_end = 1;
+
+if xds.has_force
+    time_onset = compute_force_onset_time(xds);
+    xds.trial_force_onset_time = time_onset;
+end
+
+[trial_spike_counts_onset, trial_emg_onset, trial_force_onset, trial_kin_onset, trial_tgt_pos_onset] = ...
+    get_rewarded_trials(xds, start_event, time_before_start, end_event, time_after_end);
+
 
 
 

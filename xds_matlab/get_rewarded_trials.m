@@ -1,7 +1,18 @@
-function [trial_spike_counts, trial_EMG, trial_force, trial_kin, trial_curs, trial_tgt_pos] = get_rewarded_trials(xds,start_time)
+function [trial_spike_counts, trial_EMG, trial_force, trial_kin, trial_curs, trial_tgt_pos] = get_rewarded_trials(xds, start_event, varargin)
+
+if nargin > 3
+    time_before_start = varargin{1};
+    end_event = varargin{2};
+    time_after_end = varargin{3};
+else 
+    time_before_start = 0;
+    end_event = 'end_time';
+    time_after_end = 0;
+end
+
 
 % a list of times for successes
-suc_timetable = get_trial_time_table(xds, 'R', start_time);
+suc_timetable = get_trial_time_table(xds, 'R', start_event, time_before_start, end_event, time_after_end);
 
 % set a sub-index for incrementing the cell when it meets all of the
 % conditions we want
