@@ -6,17 +6,23 @@ import copy
 
 def parse_h5py(path, file_name):
     def arr_to_str(b):
-        return ''.join([chr(each) for each in b])
+        if isinstance(b, list) == 0:
+           return ''.join([chr(int(each)) for each in b])
+        else:
+            b_ = []
+            for each in b:
+                b_.append(''.join([chr(c) for c in each]))
+            return b_
     
     def parse_meta(raw_meta):
         meta = {}
-        meta['ranBy'] = ''.join([chr(each) for each in np.asarray(raw_meta['ranBy'])])
-        meta['monkey'] = ''.join([chr(each) for each in np.asarray(raw_meta['monkey'])])
-        meta['array'] = ''.join([chr(each) for each in np.asarray(raw_meta['array'])])
-        meta['dateTime'] = ''.join([chr(each) for each in np.asarray(raw_meta['dateTime'])])
-        meta['processedTime'] = ''.join([chr(each) for each in np.asarray(raw_meta['processedTime'])])
-        meta['rawFileName'] = ''.join([chr(each) for each in np.asarray(raw_meta['rawFileName'])])
-        meta['task'] = ''.join([chr(each) for each in np.asarray(raw_meta['task'])])
+        meta['ranBy'] = ''.join([chr(int(each)) for each in np.asarray(raw_meta['ranBy'])])
+        meta['monkey'] = ''.join([chr(int(each)) for each in np.asarray(raw_meta['monkey'])])
+        meta['array'] = ''.join([chr(int(each)) for each in np.asarray(raw_meta['array'])])
+        meta['dateTime'] = ''.join([chr(int(each)) for each in np.asarray(raw_meta['dateTime'])])
+        meta['processedTime'] = ''.join([chr(int(each)) for each in np.asarray(raw_meta['processedTime'])])
+        meta['rawFileName'] = ''.join([chr(int(each)) for each in np.asarray(raw_meta['rawFileName'])])
+        meta['task'] = ''.join([chr(int(each)) for each in np.asarray(raw_meta['task'])])
         meta['duration'] = np.asarray(raw_meta['duration'])[0][0]
         meta['lab'] = np.asarray(raw_meta['lab'])[0][0]
         meta['numTrials'] = np.asarray(raw_meta['numTrials'])[0][0]
