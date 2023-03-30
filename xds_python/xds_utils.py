@@ -5,6 +5,9 @@ from collections import defaultdict
 import copy
 
 def parse_h5py(path, file_name):
+    """
+    A function to parse h5py format .mat file (v7.3)
+    """
     def arr_to_str(b):
         if isinstance(b, list) == 0:
            return ''.join([chr(int(each)) for each in b])
