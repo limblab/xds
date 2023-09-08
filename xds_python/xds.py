@@ -68,6 +68,7 @@ class lab_data:
         self.spike_counts = parsed['spike_counts']
         self.spikes = parsed['spikes']
         self.unit_names = parsed['unit_names']
+        self.thresholds = parsed['thresholds']
         if 'spike_waveforms' in parsed.keys():
             self.spike_waveforms = parsed['spike_waveforms']
         if 'EMG' in parsed.keys():
@@ -110,9 +111,12 @@ class lab_data:
                 idx = self.trial_info_table_header.index('tgtCenter')
             except Exception:
                 print('Check the trial info table header')
-        target_center = np.asarray(self.trial_info_table[idx]).squeeze()
-        self.trial_target_center_x = target_center[:, 0]
-        self.trial_target_center_y = target_center[:, 1]
+        try:
+            target_center = np.asarray(self.trial_info_table[idx]).squeeze()
+            self.trial_target_center_x = target_center[:, 0]
+            self.trial_target_center_y = target_center[:, 1]
+        except Exception:
+            print('No information about target center in this file')
         
         # -------- for multigadget files with more than 1 gadget activated, find out the gadget number --------- #
         if '_MG_' in self.file_name:
@@ -277,7 +281,10 @@ class lab_data:
                 time_start = self.trial_movement_onset_time
             except Exception:
                 print('Compute movement onset time first')
-            
+        elif start_event == 'pickupTime':
+            idx = self.trial_info_table_header.index('pickupTime')
+            time_start = [each[0][0] for each in self.trial_info_table[idx]]
+        
         if end_event == 'start_time':
             time_end = self.trial_start_time
         elif end_event == 'gocue_time':
@@ -294,6 +301,9 @@ class lab_data:
                 time_end = self.trial_movement_onset_time
             except Exception:
                 print('Compute movement onset time first')
+        elif start_event == 'pickupTime':
+            idx = self.trial_info_table_header.index('pickupTime')
+            time_end = [each[0][0] for each in self.trial_info_table[idx]]
         
         if (my_type == 'R')|(my_type == 'F'):
             # Get the indices of a specific type of trials, 'R' or 'F'
@@ -310,13 +320,13 @@ class lab_data:
         if len(type_trial) > 0:
             for n in type_trial:
                 t1 = time_start[n] - time_before_start
-                t2 = time_end[n] + time_after_end
+                t2 = time_end[n] + time_after_end + 0.0008
                 if t2 > t1:
                     if raw_flag == 0:
-                        idx = np.where( (self.time_frame > t1) & (self.time_frame <= t2) )[0]
+                        idx = np.where( (self.time_frame > t1) & (self.time_frame < t2) )[0]
                     else:
                         if hasattr(self, 'raw_EMG_time_frame'):
-                            idx = np.where( (self.raw_EMG_time_frame > t1) & (self.raw_EMG_time_frame <= t2) )[0]
+                            idx = np.where( (self.raw_EMG_time_frame > t1) & (self.raw_EMG_time_frame < t2) )[0]
                         else:
                             #print('There is no raw EMG in this file, but the raw_flag is 1 here, please check')
                             idx = []
@@ -727,10 +737,38 @@ class lab_data:
         To get rid of everything about the bad channels from my_cage_data
         """
         idx = self.get_electrode_idx(elec_num)
+        #---- These are lists ----#
         for d in sorted(idx, reverse=True):
             del(self.unit_names[d])
             del(self.spikes[d])
+            del(self.spike_waveforms[d])
+        #---- These are numpy arrays ----#
         self.spike_counts = np.delete(self.spike_counts, idx, axis = 1)
+        self.thresholds = np.delete(self.thresholds, idx)
+        
+    def rethreshold(self, K):
+        """
+        K is a multiplier to get the new threshold
+        """
+        if hasattr(self, 'thresholds'):
+            waveforms = self.spike_waveforms
+            spikes = self.spikes
+            th = self.thresholds
+            new_th = [K*each for each in th]
+        
+            idx = []
+            for i in range(len(th)):
+                M = np.min(waveforms[i], axis = 1)
+                idx.append(np.where(M>new_th[i])[0])
+            
+            waveforms_, spikes_ = [], []
+            for i in range(len(th)):
+                waveforms_.append(np.delete(waveforms[i], idx[i], axis = 0))
+                spikes_.append(np.delete(spikes[i], idx[i]))
+            self.spike_waveforms = waveforms_
+            self.spikes = spikes_
+        else:
+            pass
    
 ###################################################################################################################################
 ###################################################################################################################################
@@ -976,7 +1014,10 @@ class lab_data_DSPW_EMG(lab_data):
             idx = []
             for each in c:
                 idx.append(list(np.arange(each-L, each+L)))
-            u_idx = sorted(set(idx[0]).union(*idx))
+            if len(idx)>0:
+                u_idx = sorted(set(idx[0]).union(*idx))
+            else:
+                u_idx = []
             u_idx = np.asarray(u_idx)
             over_idx = np.where(u_idx>len(data)-1)[0]
             u_idx = list(np.delete(u_idx, over_idx))
@@ -991,7 +1032,10 @@ class lab_data_DSPW_EMG(lab_data):
         idx = []
         for each in c:
             idx.append(list(np.arange(each-L, each+L)))
-        u_idx = sorted(set(idx[0]).union(*idx))
+        if len(idx)>0:
+            u_idx = sorted(set(idx[0]).union(*idx))
+        else:
+            u_idx = []
         u_idx = np.asarray(u_idx)
         over_idx = np.where(u_idx>len(data)-1)[0]
         u_idx = list(np.delete(u_idx, over_idx))

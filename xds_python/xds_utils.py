@@ -5,9 +5,6 @@ from collections import defaultdict
 import copy
 
 def parse_h5py(path, file_name):
-    """
-    A function to parse h5py format .mat file (v7.3)
-    """
     def arr_to_str(b):
         if isinstance(b, list) == 0:
            return ''.join([chr(int(each)) for each in b])
@@ -61,6 +58,7 @@ def parse_h5py(path, file_name):
     temp = [read_data[xds['unit_names'][i][0]][()] for i in range( len(xds['unit_names']) )]
     parsed['unit_names'] = [arr_to_str(each) for each in temp]
     parsed['time_frame'] = np.asarray(xds['time_frame']).reshape((-1, ))
+    parsed['thresholds'] = np.asarray(xds['thresholds']).reshape((-1, ))
     
     if 'spike_waveforms' in xds.keys():
         parsed['spike_waveforms'] = [read_data[xds['spike_waveforms'][i][0]][()].T for i in range(len(xds['spike_waveforms']))]
@@ -165,6 +163,7 @@ def parse_scipy(path, file_name):
     
     # -------- data -------- #
     parsed['time_frame'] = xds['time_frame'][0][0].reshape((-1, ))
+    parsed['thresholds'] = xds['thresholds'][0][0].reshape((-1, ))
     parsed['spike_counts'] = xds['spike_counts'][0][0]
     parsed['spikes'] = xds['spikes'][0][0][0].tolist()
     parsed['unit_names'] = [each.tolist()[0] for each in xds['unit_names'][0][0][0]]
@@ -332,8 +331,8 @@ def find_movement_onset(var_list, ch, thr):
 def find_target_dir(trial_curs_p, target_list = [-135, -90, -45, 0, 45, 90, 135, 180]):
     """
     This function is used to find out the directions of trials, because sometimes they are wrong in origninal recordings
-    curs_p: a list containing the cursor trajectories for each trial
-    """    
+    
+    """   
     dirs = []
     for each in trial_curs_p:
         s = each[-1, :] - each[0, :]

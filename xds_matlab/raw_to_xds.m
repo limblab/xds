@@ -45,17 +45,21 @@ sorted = params.sorted;
 % Here are some fields for raw data
 requires_raw_emg = 0;
 requires_raw_force = 0;
+has_raw_EMG = 0;
+has_raw_force = 0;
+
 if isfield(params,'requires_raw_emg')
     requires_raw_emg = params.requires_raw_emg;
+    has_raw_EMG = params.requires_raw_emg;
 end
 if isfield(params,'requires_raw_force')
     requires_raw_force = params.requires_raw_force;
+    has_raw_force = params.requires_raw_force;
 end
-
 % Whether to save the spike waveforms
 save_waveforms = 0;
 if isfield(params, 'save_waveforms')
-    save_waveforms = 1;
+    save_waveforms = params.save_waveforms;
 end
 
 cds=commonDataStructure();
@@ -120,6 +124,8 @@ xds.has_EMG = xds.meta.hasEmg;
 xds.has_force = xds.meta.hasForce;
 xds.has_kin = xds.meta.hasKinematics;
 xds.sorted = sorted;
+xds.has_raw_EMG = has_raw_EMG;
+xds.has_raw_force = has_raw_force;
 
 % units
 % In some data files (like those collected on Monkey Chewie in 2015) there
@@ -190,6 +196,7 @@ elseif sorted == 1
 end
 
 xds.spike_counts = ex.bin.data{:,binnedUnitMask}*bin_width;
+xds.thresholds = transpose([ex.units.data(:).lowThreshold]);
 if ex.meta.hasEmg == true
    emgMask = ~cellfun(@(x)isempty(strfind(x,'EMG')),ex.bin.data.Properties.VariableNames);
    emgNames = ex.bin.data.Properties.VariableNames(emgMask);
@@ -209,10 +216,13 @@ if ex.meta.hasForce == true
    fyMask = ~cellfun(@(x)isempty(strfind(x,'fy')),ex.bin.data.Properties.VariableNames);
    xds.force(:, 1) = ex.bin.data{:,fxMask};
    xds.force(:, 2) = ex.bin.data{:,fyMask};
+   % Can only read the raw forces from cds.NS3
    if requires_raw_force
-       raw_force_table = table2array(cds.force);
-       xds.raw_force = raw_force_table(:,2:end);
-       xds.raw_force_time_frame = raw_force_table(:,1);
+       raw_force = cds.NS3.Data(1:2, :);
+       raw_force_time_frame = roundTime((0:length(raw_force)-1)' / 2000);
+       raw_force_idx = find( (raw_force_time_frame>=raw_EMG_table(1,1))&(raw_force_time_frame<=raw_EMG_table(end,1)) );
+       xds.raw_force = transpose(raw_force(:,raw_force_idx));
+       xds.raw_force_time_frame = raw_force_time_frame(raw_force_idx);
    else
        xds.raw_force = [];
        xds.raw_force_time_frame = [];
