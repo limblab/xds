@@ -68,7 +68,8 @@ class lab_data:
         self.spike_counts = parsed['spike_counts']
         self.spikes = parsed['spikes']
         self.unit_names = parsed['unit_names']
-        self.thresholds = parsed['thresholds']
+        if 'thresholds' in parsed.keys():
+            self.thresholds = parsed['thresholds']
         if 'spike_waveforms' in parsed.keys():
             self.spike_waveforms = parsed['spike_waveforms']
         if 'EMG' in parsed.keys():
@@ -744,7 +745,8 @@ class lab_data:
             del(self.spike_waveforms[d])
         #---- These are numpy arrays ----#
         self.spike_counts = np.delete(self.spike_counts, idx, axis = 1)
-        self.thresholds = np.delete(self.thresholds, idx)
+        if hasattr(self, 'thresholds'):
+            self.thresholds = np.delete(self.thresholds, idx)
         
     def rethreshold(self, K):
         """

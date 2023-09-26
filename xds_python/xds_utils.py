@@ -58,8 +58,10 @@ def parse_h5py(path, file_name):
     temp = [read_data[xds['unit_names'][i][0]][()] for i in range( len(xds['unit_names']) )]
     parsed['unit_names'] = [arr_to_str(each) for each in temp]
     parsed['time_frame'] = np.asarray(xds['time_frame']).reshape((-1, ))
-    parsed['thresholds'] = np.asarray(xds['thresholds']).reshape((-1, ))
-    
+    try:
+        parsed['thresholds'] = np.asarray(xds['thresholds']).reshape((-1, ))
+    except Exception:
+        print('Thresholds for spike detections were not extracted as a field in this dataset')
     if 'spike_waveforms' in xds.keys():
         parsed['spike_waveforms'] = [read_data[xds['spike_waveforms'][i][0]][()].T for i in range(len(xds['spike_waveforms']))]
     if 'EMG' in xds.keys():
@@ -163,7 +165,10 @@ def parse_scipy(path, file_name):
     
     # -------- data -------- #
     parsed['time_frame'] = xds['time_frame'][0][0].reshape((-1, ))
-    parsed['thresholds'] = xds['thresholds'][0][0].reshape((-1, ))
+    try:
+        parsed['thresholds'] = xds['thresholds'][0][0].reshape((-1, ))
+    except Exception:
+        print('Thresholds for spike detections were not extracted as a field in this dataset')
     parsed['spike_counts'] = xds['spike_counts'][0][0]
     parsed['spikes'] = xds['spikes'][0][0][0].tolist()
     parsed['unit_names'] = [each.tolist()[0] for each in xds['unit_names'][0][0][0]]
