@@ -742,7 +742,8 @@ class lab_data:
         for d in sorted(idx, reverse=True):
             del(self.unit_names[d])
             del(self.spikes[d])
-            del(self.spike_waveforms[d])
+            if hasattr(self, 'spike_waveforms'):
+                del(self.spike_waveforms[d])
         #---- These are numpy arrays ----#
         self.spike_counts = np.delete(self.spike_counts, idx, axis = 1)
         if hasattr(self, 'thresholds'):
