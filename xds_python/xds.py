@@ -724,7 +724,7 @@ class lab_data:
         """
         To get the idx of electrodes specified by elec_num
         dataset: xds structure
-        elec_num: a list containing the number of bad channels
+        elec_num: a list containing the number of bad electrodes
         """
         idx = []
         for each in elec_num:
@@ -735,7 +735,9 @@ class lab_data:
 
     def del_electrode(self, elec_num):
         """
-        To get rid of everything about the bad channels from my_cage_data
+        This function intend to delete data and information about the electrodes
+        specified by elec_num.
+        The numbers in elec_num are the number part of things like 'elec58'
         """
         idx = self.get_electrode_idx(elec_num)
         #---- These are lists ----#
@@ -772,6 +774,21 @@ class lab_data:
             self.spikes = spikes_
         else:
             pass
+        
+    def report_sparse_channels(self, TH):
+        """
+        This function intends to report the sparse electrodes.
+        It returns a list of numbers, which are the number part of things like 'elec58',
+        and it prints the electrode names.
+        TH is in Hz
+        """
+        T = self.time_frame[-1] # the length
+        S = [len(each) for each in self.spikes]/T
+        idx = sorted(np.where(S<TH)[0], reverse = True)
+        elec_names = [self.unit_names[k] for k in idx]
+        print('These are sparse channels: %s'%elec_names)
+        elec_num = [int(k[4:]) for k in elec_names]
+        return elec_num
    
 ###################################################################################################################################
 ###################################################################################################################################
