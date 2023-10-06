@@ -212,15 +212,23 @@ class lab_data:
         The force onset time during all trials, including rewarded, failed and aborted trials
         are calculated here
         """
+        greyson_flag = False
+        if 'reyson' in self.file_name:
+            if int(self.file_name[:8])<20190701:
+                greyson_flag = True
         if hasattr(self, 'force'):
-            idx = [np.where((self.time_frame > t[0]) & (self.time_frame < t[1]) )[0] 
-                   for t in zip(self.trial_start_time, self.trial_end_time)]
+            if greyson_flag == False:
+                idx = [np.where((self.time_frame > t[0]) & (self.time_frame < t[1]) )[0] 
+                       for t in zip(self.trial_start_time, self.trial_end_time)]
+            else:
+                idx = [np.where((self.time_frame > t[0]) & (self.time_frame < t[1]) )[0] 
+                       for t in zip(self.trial_gocue_time, self.trial_end_time)]
             trial_time_frame = [self.time_frame[n] for n in idx]
             trial_force = [self.force[n] for n in idx]
             idx_onset = find_force_onset(trial_force, channel, 0.4)
             time_onset = [trial_time_frame[i][idx_onset[i]] for i in range(len(trial_time_frame))]
             print('Get the force onset time!')
-            self.trial_force_onset_time = np.asarray(time_onset)
+            self.trial_force_onset_time = np.array(time_onset).reshape((-1,))
         else:
             print('There is no force data in this file')
     
@@ -237,7 +245,7 @@ class lab_data:
             idx_onset = find_movement_onset(trial_curs_p, channel, thr)
             time_onset = [trial_time_frame[i][idx_onset[i]] for i in range(len(trial_time_frame))]
             print('Get the movement onset time!')
-            self.trial_movement_onset_time = np.asarray(time_onset)
+            self.trial_movement_onset_time = np.array(time_onset).reshape((-1,))
         else:
             print('There is no force data in this file')
     
@@ -660,10 +668,31 @@ class lab_data:
                 trial_all_curs_a.append([data[2][i] for i in c])
             else:
                 trial_all_target.append([data[i] for i in c])
+        #---- return the data ----#
         if data_type == 'cursor':
-            return trial_all_curs_p, trial_all_curs_v, trial_all_curs_a
-        else:      
-            return trial_all_target
+            #---- Adding a check to avoid cases like one outstanding time point ----#
+            trial_all_curs_p_, trial_all_curs_v_, trial_all_curs_a_ = [], [], []
+            temp = [len(each) for each in sum(trial_all_curs_p, [])]
+            LEN = stats.mode(temp)[0][0]
+            for condition in trial_all_curs_p:
+                temp = [each[:LEN, :] for each in condition]
+                trial_all_curs_p_.append(temp)
+            for condition in trial_all_curs_v:
+                temp = [each[:LEN, :] for each in condition]
+                trial_all_curs_v_.append(temp)
+            for condition in trial_all_curs_a:
+                temp = [each[:LEN, :] for each in condition]
+                trial_all_curs_a_.append(temp)
+            return trial_all_curs_p_, trial_all_curs_v_, trial_all_curs_a_
+        else:
+            #---- Adding a check to avoid cases like one outstanding time point ----#
+            trial_all_target_ = []
+            temp = [len(each) for each in sum(trial_all_target, [])]
+            LEN = stats.mode(temp)[0][0]
+            for condition in trial_all_target:
+                temp = [each[:LEN, :] for each in condition]
+                trial_all_target_.append(temp)
+            return trial_all_target_
         
     def sort_trials_target_center(self, x_or_y, data_type, target_center_list, trial_type, time_params, EMG_channels = 'all', gadget_number = -1):
         start_event = time_params['start_event']
@@ -715,10 +744,31 @@ class lab_data:
                 trial_all_curs_a.append([data[2][i] for i in c])
             else:
                 trial_all_target.append([data[i] for i in c])
+        #---- return the data ----#
         if data_type == 'cursor':
-            return trial_all_curs_p, trial_all_curs_v, trial_all_curs_a
-        else:      
-            return trial_all_target
+            #---- Adding a check to avoid cases like one outstanding time point ----#
+            trial_all_curs_p_, trial_all_curs_v_, trial_all_curs_a_ = [], [], []
+            temp = [len(each) for each in sum(trial_all_curs_p, [])]
+            LEN = stats.mode(temp)[0][0]
+            for condition in trial_all_curs_p:
+                temp = [each[:LEN, :] for each in condition]
+                trial_all_curs_p_.append(temp)
+            for condition in trial_all_curs_v:
+                temp = [each[:LEN, :] for each in condition]
+                trial_all_curs_v_.append(temp)
+            for condition in trial_all_curs_a:
+                temp = [each[:LEN, :] for each in condition]
+                trial_all_curs_a_.append(temp)
+            return trial_all_curs_p_, trial_all_curs_v_, trial_all_curs_a_
+        else:
+            #---- Adding a check to avoid cases like one outstanding time point ----#
+            trial_all_target_ = []
+            temp = [len(each) for each in sum(trial_all_target, [])]
+            LEN = stats.mode(temp)[0][0]
+            for condition in trial_all_target:
+                temp = [each[:LEN, :] for each in condition]
+                trial_all_target_.append(temp)
+            return trial_all_target_
         
     def get_electrode_idx(self, elec_num):
         """
@@ -786,7 +836,8 @@ class lab_data:
         S = [len(each) for each in self.spikes]/T
         idx = sorted(np.where(S<TH)[0], reverse = True)
         elec_names = [self.unit_names[k] for k in idx]
-        print('These are sparse channels: %s'%elec_names)
+        print('There are %d sparse channels'%(len(elec_names)))
+        print('These are sparse channels: %s'%(elec_names))
         elec_num = [int(k[4:]) for k in elec_names]
         return elec_num
    
