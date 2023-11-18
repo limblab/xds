@@ -822,6 +822,7 @@ class lab_data:
                 spikes_.append(np.delete(spikes[i], idx[i]))
             self.spike_waveforms = waveforms_
             self.spikes = spikes_
+            print('Rethreshold has been done!')
         else:
             pass
         
