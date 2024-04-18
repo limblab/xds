@@ -175,6 +175,8 @@ class lab_data:
         For some trials the timings for trial_start, trial_end or trial_gocue are nans. 
         This function will get rid of these trials.
 
+        Trials with invalid timings will also be removed.
+
         Returns
         -------
         None.
@@ -189,6 +191,13 @@ class lab_data:
         end_nan_idx = np.argwhere(np.isnan(trial_end_time))[:,0]
         union_nan_idx = np.asarray(sorted(list(set(gocue_nan_idx).union(set(start_nan_idx)).union(set(end_nan_idx))),
                                           reverse = True))
+        start_early_idx = np.argwhere(trial_start_time < self.time_frame[0])[:,0]
+        end_late_idx = np.argwhere(trial_end_time > self.time_frame[-1])[:,0]
+        union_invalid_idx = np.asarray(sorted(list(set(start_early_idx).union(set(end_late_idx))),
+                                            reverse = True))
+        
+        union_nan_idx = np.asarray(sorted(list(set(union_nan_idx).union(set(union_invalid_idx))),
+                                            reverse = True))
         if len(union_nan_idx)>0:
             self.trial_gocue_time = np.delete(self.trial_gocue_time, union_nan_idx, axis = 0)
             self.trial_start_time = np.delete(self.trial_start_time, union_nan_idx)
@@ -239,7 +248,8 @@ class lab_data:
         """
         if (hasattr(self, 'curs_p')|hasattr(self, 'kin_p')):
             idx = [np.where((self.time_frame > t[0]) & (self.time_frame < t[1]) )[0] 
-                   for t in zip(self.trial_start_time, self.trial_end_time)]
+                #    for t in zip(self.trial_start_time, self.trial_end_time)]
+                    for t in zip(self.trial_gocue_time, self.trial_end_time)]
             trial_time_frame = [self.time_frame[n] for n in idx]
             trial_curs_p = [self.curs_p[n] for n in idx]
             idx_onset = find_movement_onset(trial_curs_p, channel, thr)
@@ -247,7 +257,7 @@ class lab_data:
             print('Get the movement onset time!')
             self.trial_movement_onset_time = np.array(time_onset).reshape((-1,))
         else:
-            print('There is no force data in this file')
+            print('There is no movement data in this file')
     
     def get_trials_idx(self, my_type, start_event, time_before_start, end_event = 'end_time', time_after_end = 0, raw_flag = 0, gadget_number = -1):
         """
@@ -543,7 +553,10 @@ class lab_data:
             out, _ = np.histogram(bb, bins)
             spike_counts.append(out)
         bins = bins.reshape((len(bins),1))
-        return bins[1:], np.asarray(spike_counts).T
+        bins = bins[1:] - bin_size / 2
+        bins = bins[1:-1]; spike_counts = np.asarray(spike_counts).T[1:-1, ...]
+        return bins, spike_counts
+        # return bins[1:], np.asarray(spike_counts).T
               
     def resample_EMG(self, new_bin_size):
         """
