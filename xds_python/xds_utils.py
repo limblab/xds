@@ -40,8 +40,20 @@ def parse_h5py(path, file_name):
     
     parsed['has_EMG'] = np.asarray(xds['has_EMG'])[0][0]
     parsed['has_force'] = np.asarray(xds['has_force'])[0][0]
-    parsed['has_kin'] = np.asarray(xds['has_kin'])[0][0]
-    parsed['has_cursor'] = np.asarray(xds['has_kin'])[0][0]
+    try:
+        parsed['has_kin'] = np.asarray(xds['has_kin'])[0][0]
+    except Exception:
+        if ('curs_p' in xds.keys())|('kin_p' in xds.keys()):
+            parsed['has_kin'] = 1
+        else:
+            parsed['has_kin'] = 0
+    try:
+        parsed['has_cursor'] = np.asarray(xds['has_cursor'])[0][0]
+    except Exception:
+        if ('curs_p' in xds.keys())|('kin_p' in xds.keys()):
+            parsed['has_cursor'] = 1
+        else:
+            parsed['has_cursor'] = 0
     parsed['sorted'] = np.asarray(xds['sorted'])[0][0]
     parsed['bin_width'] = np.asarray(xds['bin_width'])[0][0]
     try:
@@ -149,8 +161,20 @@ def parse_scipy(path, file_name):
     
     # -------- flag variables -------- #
     parsed['has_EMG'] = xds['has_EMG'][0][0][0][0]
-    parsed['has_kin'] = xds['has_kin'][0][0][0][0]
-    parsed['has_cursor'] = parsed['has_kin']
+    try:
+        parsed['has_kin'] = xds['has_kin'][0][0][0][0]
+    except Exception:
+        if ('curs_p' in xds.keys())|('kin_p' in xds.keys()):
+            parsed['has_kin'] = 1
+        else:
+            parsed['has_kin'] = 0
+    try:
+        parsed['has_cursor'] = parsed['has_kin']
+    except Exception:
+        if ('curs_p' in xds.keys())|('kin_p' in xds.keys()):
+            parsed['has_cursor'] = 1
+        else:
+            parsed['has_cursor'] = 0
     parsed['has_force'] = xds['has_force'][0][0][0][0]
     parsed['sorted'] = xds['sorted'][0][0][0][0]
     parsed['bin_width'] = xds['bin_width'][0][0][0][0]
