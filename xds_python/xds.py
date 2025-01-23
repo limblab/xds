@@ -684,6 +684,8 @@ class lab_data:
                 temp = [each[:LEN, :] for each in condition]
                 trial_all_curs_a_.append(temp)
             return trial_all_curs_p_, trial_all_curs_v_, trial_all_curs_a_
+        elif data_type == 'spikes':
+            return trial_all_target
         else:
             #---- Adding a check to avoid cases like one outstanding time point ----#
             trial_all_target_ = []
