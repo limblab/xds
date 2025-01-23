@@ -126,6 +126,22 @@ class lab_data:
                 self.trial_gadget_number = np.asarray(self.trial_info_table[idx]).squeeze()
             except Exception:
                 print('Lack of gadget information in the data file!')
+        # -------- bump related information ----------- #
+        if 'bumpTime' in parsed['trial_info_table_header']:
+            idx = parsed['trial_info_table_header'].index('bumpTime')
+            self.bump_time = [float(each[0][0]) for each in parsed['trial_info_table'][idx]]
+            try:
+                idx = parsed['trial_info_table_header'].index('bumpHoldPeriod')
+                self.bump_hold_period = [float(each[0][0]) for each in parsed['trial_info_table'][idx]]
+                idx = parsed['trial_info_table_header'].index('bumpRisePeriod')
+                self.bump_rise_period = [float(each[0][0]) for each in parsed['trial_info_table'][idx]]
+                idx = parsed['trial_info_table_header'].index('bumpMagnitude')
+                self.bump_magnitude = [float(each[0][0]) for each in parsed['trial_info_table'][idx]]
+                idx = parsed['trial_info_table_header'].index('bumpDir')
+                self.bump_dir = [float(each[0][0]) for each in parsed['trial_info_table'][idx]]
+            except Exception:
+                print('Something is wrong with bump information')
+            
             
     def get_meta(self):
         a = dict()

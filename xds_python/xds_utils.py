@@ -115,7 +115,8 @@ def parse_h5py(path, file_name):
         print('something wrong with the gocue time')
     # -------- handling target related variables -------- #
     parsed['trial_target_dir'] = np.asarray(xds['trial_target_dir']).reshape((-1, ))
-    parsed['trial_target_corners'] = np.asarray(xds['trial_target_corners']).T
+    if 'trial_target_corners' in xds.keys():
+        parsed['trial_target_corners'] = np.asarray(xds['trial_target_corners']).T
     parsed['trial_result'] = np.asarray([chr(each) for each in np.asarray(xds['trial_result']).reshape((-1, ))])
     
     temp = [read_data[xds['trial_info_table_header'][0][i]][()] for i in range( xds['trial_info_table_header'].shape[1] )]
@@ -240,7 +241,10 @@ def parse_scipy(path, file_name):
     parsed['trial_start_time'] = xds['trial_start_time'][0][0]
     parsed['trial_end_time'] = xds['trial_end_time'][0][0]
     parsed['trial_gocue_time'] = xds['trial_gocue_time'][0][0]
-    parsed['trial_target_corners'] = xds['trial_target_corners'][0][0]
+    try:
+        parsed['trial_target_corners'] = xds['trial_target_corners'][0][0]
+    except Exception:
+        pass
     parsed['trial_target_dir'] = xds['trial_target_dir'][0][0]
     parsed['trial_result'] = xds['trial_result'][0][0]
     parsed['trial_info_table'] = xds['trial_info_table'][0][0].T.tolist()
