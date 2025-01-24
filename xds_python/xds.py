@@ -57,7 +57,13 @@ class lab_data:
             self.has_raw_EMG = parsed['has_raw_EMG']
         # -------- trial information -------- #
         self.trial_target_corners = parsed['trial_target_corners']
-        self.trial_target_dir = parsed['trial_target_dir'] 
+        temp = []
+        for each in parsed['trial_target_dir']:
+            if each>180:
+                temp.append(each-360)
+            else:
+                temp.append(each)
+        self.trial_target_dir = np.array(temp)
         self.trial_result = parsed['trial_result']
         self.trial_start_time = parsed['trial_start_time']
         self.trial_end_time = parsed['trial_end_time']
@@ -196,15 +202,13 @@ class lab_data:
         None.
 
         """
-        trial_gocue_time = self.trial_gocue_time
-        trial_start_time = self.trial_start_time
-        trial_end_time = self.trial_end_time
         # -------- Get rid of trials with gocue time nan -------- #
-        gocue_nan_idx = np.argwhere(np.isnan(trial_gocue_time))[:,0]
-        start_nan_idx = np.argwhere(np.isnan(trial_start_time))[:,0]
-        end_nan_idx = np.argwhere(np.isnan(trial_end_time))[:,0]
-        union_nan_idx = np.asarray(sorted(list(set(gocue_nan_idx).union(set(start_nan_idx)).union(set(end_nan_idx))),
-                                          reverse = True))
+        gocue_nan_idx = np.argwhere(np.isnan(self.trial_gocue_time))[:,0]
+        start_nan_idx = np.argwhere(np.isnan(self.trial_start_time))[:,0]
+        end_nan_idx = np.argwhere(np.isnan(self.trial_end_time))[:,0]
+        tgt_dir_idx = np.argwhere(np.isnan(self.trial_target_dir))[:, 0]
+        union_nan_idx = np.asarray(sorted(list(set(gocue_nan_idx)|set(start_nan_idx)|set(end_nan_idx)|set(tgt_dir_idx)),
+                                    reverse = True))
         if len(union_nan_idx)>0:
             self.trial_gocue_time = np.delete(self.trial_gocue_time, union_nan_idx, axis = 0)
             self.trial_start_time = np.delete(self.trial_start_time, union_nan_idx)

@@ -2,17 +2,67 @@ import numpy as np
 import math
 from xds import lab_data
 import scipy.stats as stats
-import itertools
-from sklearn.decomposition import PCA
-import itertools
-from sklearn.utils import shuffle
-import random
 import pickle
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
 import seaborn as sns
 
-rcParams['font.family'] = 'Arial'
+def sort_trials_with_bump_dir(xds, trial_options, trial_type, time_params):
+    """
+    xds: the struct
+    trial_options: 'both', 'bump', 'no bump'
+    trial_type: 'R' or 'F'
+    """
+    start_event = time_params['start_event']
+    ahead = time_params['time_before_start']
+    end_event = time_params['end_event']
+    end_time_offset = time_params['time_after_end']
+    #---- print reach direction list ----#
+    tgt_dir_list = list(set(xds.trial_target_dir))
+    print('Reaching direction includes: %s'%(tgt_dir_list))
+    #---- get the indices for rewarded or failed trials ----#
+    trial_type_idx = np.where(xds.trial_result == trial_type)[0]
+    #---- get spike count data and cursor data ----#
+    spike_counts = xds.get_trials_data_spike_counts(trial_type, start_event, ahead, end_event, end_time_offset)
+    curs_p = xds.get_trials_data_kin(trial_type, start_event, ahead, end_event, end_time_offset)[0]
+    
+    #---- sort trials according to direction and with or without bump ----#
+    trial_spike_counts, trial_curs_p = [], []
+    if trial_options == 'both':
+        for direction in tgt_dir_list:
+            target_dir_idx = np.where(xds.trial_target_dir == direction)
+            b = trial_type_idx[np.isin(trial_type_idx, target_dir_idx)]
+            c = sorted([np.where(trial_type_idx == each)[0][0] for each in b])
+            trial_spike_counts.append([spike_counts[i] for i in c])
+            trial_curs_p.append([curs_p[i] for i in c])
+    elif trial_options == 'bump':
+        #---- get indices for trials with a bump ----#
+        bump_idx = np.where(np.isnan(xds.bump_time)!=True)[0]
+        for direction in tgt_dir_list:
+            target_dir_idx = np.where(xds.trial_target_dir == direction)[0]
+            b = set(trial_type_idx)&set(target_dir_idx)&set(bump_idx)
+            c = sorted([np.where(trial_type_idx == each)[0][0] for each in b])
+            trial_spike_counts.append([spike_counts[i] for i in c])
+            trial_curs_p.append([curs_p[i] for i in c])
+    elif trial_options == 'no bump':
+        #---- get indices for trials without a bump ----#
+        bump_idx = np.where(np.isnan(xds.bump_time)==True)[0]
+        for direction in tgt_dir_list:
+            target_dir_idx = np.where(xds.trial_target_dir == direction)[0]
+            b = set(trial_type_idx)&set(target_dir_idx)&set(bump_idx)
+            c = sorted([np.where(trial_type_idx == each)[0][0] for each in b])
+            trial_spike_counts.append([spike_counts[i] for i in c])
+            trial_curs_p.append([curs_p[i] for i in c])
+    #---- return the data ----#
+    trial_curs_p_, trial_spike_counts_ = [], []
+    temp = [len(each) for each in sum(trial_curs_p, [])]
+    LEN = stats.mode(temp)[0]-1
+    for condition in zip(trial_curs_p, trial_spike_counts):
+        temp = [each[:LEN, :] for each in condition[0]]
+        trial_curs_p_.append(temp)
+        temp = [each[:LEN, :] for each in condition[1]]
+        trial_spike_counts_.append(temp)
+    return trial_spike_counts_, trial_curs_p_
 
 def vaf(x,xhat):
     x = x - x.mean(axis=0)
