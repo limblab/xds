@@ -21,7 +21,10 @@ def parse_h5py(path, file_name):
         meta['array'] = ''.join([chr(int(each)) for each in np.asarray(raw_meta['array'])])
         meta['dateTime'] = ''.join([chr(int(each)) for each in np.asarray(raw_meta['dateTime'])])
         meta['processedTime'] = ''.join([chr(int(each)) for each in np.asarray(raw_meta['processedTime'])])
-        meta['rawFileName'] = ''.join([chr(int(each)) for each in np.asarray(raw_meta['rawFileName'])])
+        try:
+            meta['rawFileName'] = ''.join([chr(int(each)) for each in np.asarray(raw_meta['rawFileName'])])
+        except Exception:
+            meta['rawFileName'] = ''.join([chr(int(each)) for each in np.asarray(raw_meta['cdsName'])])
         meta['task'] = ''.join([chr(int(each)) for each in np.asarray(raw_meta['task'])])
         meta['duration'] = np.asarray(raw_meta['duration'])[0][0]
         meta['lab'] = np.asarray(raw_meta['lab'])[0][0]
