@@ -693,7 +693,10 @@ class lab_data:
             #---- Adding a check to avoid cases like one outstanding time point ----#
             trial_all_curs_p_, trial_all_curs_v_, trial_all_curs_a_ = [], [], []
             temp = [len(each) for each in sum(trial_all_curs_p, [])]
-            LEN = stats.mode(temp)[0][0]
+            if sys.version_info<=(3, 8):
+                LEN = stats.mode(temp)[0][0]
+            else:
+                LEN = stats.mode(temp)[0]    
             for condition in trial_all_curs_p:
                 temp = [each[:LEN, :] for each in condition]
                 trial_all_curs_p_.append(temp)
@@ -710,7 +713,10 @@ class lab_data:
             #---- Adding a check to avoid cases like one outstanding time point ----#
             trial_all_target_ = []
             temp = [len(each) for each in sum(trial_all_target, [])]
-            LEN = stats.mode(temp)[0][0]
+            if sys.version_info<=(3, 8):
+                LEN = stats.mode(temp)[0][0]
+            else:
+                LEN = stats.mode(temp)[0]
             for condition in trial_all_target:
                 temp = [each[:LEN, :] for each in condition]
                 trial_all_target_.append(temp)
@@ -771,7 +777,10 @@ class lab_data:
             #---- Adding a check to avoid cases like one outstanding time point ----#
             trial_all_curs_p_, trial_all_curs_v_, trial_all_curs_a_ = [], [], []
             temp = [len(each) for each in sum(trial_all_curs_p, [])]
-            LEN = stats.mode(temp)[0][0]
+            if sys.version_info<=(3, 8):
+                LEN = stats.mode(temp)[0][0]
+            else:
+                LEN = stats.mode(temp)[0]
             for condition in trial_all_curs_p:
                 temp = [each[:LEN, :] for each in condition]
                 trial_all_curs_p_.append(temp)
@@ -786,7 +795,10 @@ class lab_data:
             #---- Adding a check to avoid cases like one outstanding time point ----#
             trial_all_target_ = []
             temp = [len(each) for each in sum(trial_all_target, [])]
-            LEN = stats.mode(temp)[0][0]
+            if sys.version_info<=(3, 8):
+                LEN = stats.mode(temp)[0][0]
+            else:
+                LEN = stats.mode(temp)[0]
             for condition in trial_all_target:
                 temp = [each[:LEN, :] for each in condition]
                 trial_all_target_.append(temp)
